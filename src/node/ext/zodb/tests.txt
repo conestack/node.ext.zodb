@@ -20,13 +20,6 @@ Setup environment.
     >>> root
     {'anode': <ZODBNode object 'anode' at ...>}
     
-    >>> anode['child']
-    <ZODBNode object 'child' at ...>
-    
-    XXX: strange!
-    
-    needed to overwrite keys -> look at
-    
     >>> anode.keys()
     ['child']
     

@@ -3,9 +3,11 @@ from plumber import (
     Part,
     default,
     extend,
+    finalize,
 )
 from zope.interface import implements
 from odict.pyodict import _odict
+from persistent import Persistent
 from persistent.dict import PersistentDict
 from node.interfaces import IStorage
 from node.parts import (
@@ -56,21 +58,9 @@ class PodictStorage(Part):
     @extend
     def __iter__(self):
         return self.storage.__iter__()
-    
-    @extend
-    def keys(self):
-        """XXX: bug with nodify
-        """
-        return self.storage.keys()
-    
-    @extend
-    def values(self):
-        """XXX: bug with nodify
-        """
-        return self.storage.values()
 
 
-class ZODBNode(Podict):
+class ZODBNode(Persistent):
     __metaclass__ = plumber
     __plumbing__ = (
         NodeChildValidate,
