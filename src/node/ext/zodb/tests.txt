@@ -1,0 +1,57 @@
+Setup environment.
+::
+
+    >>> import ZODB
+
+    >>> from ZODB.FileStorage import FileStorage
+    >>> from ZODB.DB import DB
+    >>> storage = FileStorage('Data.fs')
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+
+    >>> from node.ext.zodb import ZODBNode
+    >>> anode = ZODBNode('anode')
+    >>> anode
+    <ZODBNode object 'anode' at ...>
+    
+    >>> root[anode.__name__] = anode
+    >>> anode['child'] = ZODBNode('child')
+    >>> root
+    {'anode': <ZODBNode object 'anode' at ...>}
+    
+    >>> anode['child']
+    <ZODBNode object 'child' at ...>
+    
+    XXX: strange!
+    
+    needed to overwrite keys -> look at
+    
+    >>> anode.keys()
+    ['child']
+    
+    >>> anode['child']
+    <ZODBNode object 'child' at ...>
+    
+    >>> anode.printtree()
+    <class 'node.ext.zodb.ZODBNode'>: anode
+      <class 'node.ext.zodb.ZODBNode'>: child
+
+    >>> import transaction
+    >>> transaction.commit()
+    >>> root.keys()
+    ['anode']
+    
+    >>> connection.close()
+    >>> db.close()
+    
+    >>> storage = FileStorage('Data.fs')
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    >>> root.keys()
+    ['anode']
+    
+    >>> root['anode'].printtree()
+    <class 'node.ext.zodb.ZODBNode'>: anode
+      <class 'node.ext.zodb.ZODBNode'>: child
