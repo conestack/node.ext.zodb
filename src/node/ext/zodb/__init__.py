@@ -3,12 +3,12 @@ from plumber import (
     Part,
     default,
     extend,
-    finalize,
 )
 from zope.interface import implements
 from odict.pyodict import _odict
 from persistent import Persistent
 from persistent.dict import PersistentDict
+from BTrees.OOBTree import OOBTree
 from node.interfaces import IStorage
 from node.parts import (
     Adopt,
@@ -21,10 +21,10 @@ from node.parts import (
     NodeChildValidate,
 )
 
-#class Podict__(OOBtree):
-#    """"""
-    # XXX: implement missing dict behavior and use as dict impl instead of
-    #      persistentdict
+#class Podict(_odict, OOBTree):
+#    
+#    def _dict_impl(self):
+#        return OOBTree
 
 
 class Podict(_odict, PersistentDict):
@@ -73,3 +73,16 @@ class ZODBNode(Persistent):
         Nodify,
         PodictStorage,
     )
+    
+    def _get_parent(self):
+        return self._v_parent
+    
+    def _set_parent(self, val):
+        self._v_parent = val
+    
+    __parent__ = property(_get_parent, _set_parent)
+    
+    def __getitem__(self, key):
+        val = self.storage[key]
+        val.__parent__ = self
+        return val

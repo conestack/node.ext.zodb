@@ -23,6 +23,9 @@ Setup environment.
     >>> anode.keys()
     ['child']
     
+    >>> anode.values()
+    [<ZODBNode object 'child' at ...>]
+    
     >>> anode['child']
     <ZODBNode object 'child' at ...>
     
@@ -48,3 +51,9 @@ Setup environment.
     >>> root['anode'].printtree()
     <class 'node.ext.zodb.ZODBNode'>: anode
       <class 'node.ext.zodb.ZODBNode'>: child
+    
+    >>> del root['anode']['child']
+    >>> transaction.commit()
+    
+    >>> root['anode'].printtree()
+    <class 'node.ext.zodb.ZODBNode'>: anode
