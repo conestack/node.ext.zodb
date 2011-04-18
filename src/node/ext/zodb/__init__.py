@@ -1,3 +1,4 @@
+import transaction
 from plumber import (
     plumber,
     Part,
@@ -86,3 +87,6 @@ class ZODBNode(Persistent):
         val = self.storage[key]
         val.__parent__ = self
         return val
+    
+    def __call__(self):
+        transaction.commit()
