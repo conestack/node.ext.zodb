@@ -110,10 +110,17 @@ class OOBTodictStorage(Storage):
 class ZODBPart(Part):
     
     def _get_parent(self):
-        return self._v_parent
-    
+        if hasattr(self, '_parent'):
+            return self._parent
+        if hasattr(self, '_v_parent'):
+            return self._v_parent
+        return None
+     
     def _set_parent(self, val):
-        self._v_parent = val
+        if isinstance(val, Persistent):
+            self._parent = val
+        else:
+            self._v_parent = val
     
     __parent__ = extend(property(_get_parent, _set_parent))
     

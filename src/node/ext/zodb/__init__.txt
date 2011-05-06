@@ -245,7 +245,7 @@ Fill root with some ZODBNodes and check memory usage::
 
     >>> new_size = storage.getSize()
     >>> (new_size - old_size) / 1000
-    140L
+    169L
 
 OOBTNode. Based on OOBTree as storage::
 
@@ -292,6 +292,9 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.printtree()
     <class 'node.ext.zodb.OOBTNode'>: oobtnode
       <class 'node.ext.zodb.OOBTNode'>: child
+    
+    >>> oobtnode['child'].__parent__
+    <OOBTNode object 'oobtnode' at ...>
     
     >>> del oobtnode['child']
     >>> oobtnode()
@@ -341,7 +344,7 @@ Fill root with some OOBTNodes and check memory usage::
 
     >>> new_size = storage.getSize()
     >>> (new_size - old_size) / 1000
-    136L
+    165L
 
 Cleanup test environment::
 
