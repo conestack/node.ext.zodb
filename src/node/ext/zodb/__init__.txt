@@ -278,7 +278,6 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode()
     >>> connection.close()
     >>> db.close()
-    
     >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
     >>> db = DB(storage)
     >>> connection = db.open()
@@ -286,30 +285,46 @@ OOBTNode. Based on OOBTree as storage::
     >>> sorted(root.keys())
     ['largezodb', 'oobtnode', 'zodbnode']
     
-    >>> root['oobtnode'].keys()
+    >>> oobtnode = root['oobtnode']
+    >>> oobtnode.keys()
     ['child']
     
-    >>> root['oobtnode'].printtree()
+    >>> oobtnode.printtree()
     <class 'node.ext.zodb.OOBTNode'>: oobtnode
       <class 'node.ext.zodb.OOBTNode'>: child
     
-    >>> del root['oobtnode']['child']
-    >>> root['oobtnode']()
+    >>> del oobtnode['child']
+    >>> oobtnode()
     
-    >>> root['oobtnode'].printtree()
+    >>> oobtnode.printtree()
     <class 'node.ext.zodb.OOBTNode'>: oobtnode
     
-    >>> root['oobtnode'].attrs
+    >>> oobtnode.attrs
     <OOBTNodeAttributes object '_attrs' at ...>
 
-    >>> root['oobtnode'].attrs['foo'] = 1
-    >>> root['oobtnode'].attrs['bar'] = OOBTNode()
-    >>> root['oobtnode'].attrs.values()
+    >>> oobtnode.attrs['foo'] = 1
+    >>> oobtnode.attrs['bar'] = OOBTNode()
+    >>> oobtnode.attrs.values()
     [1, <OOBTNode object 'bar' at ...>]
     
-    >>> root['oobtnode'].attribute_access_for_attrs = True
-    >>> root['oobtnode'].attrs.foo
+    >>> oobtnode.attribute_access_for_attrs = True
+    >>> oobtnode.attrs.foo
     1
+    
+    >>> oobtnode()
+    >>> connection.close()
+    >>> db.close()
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    
+    >>> oobtnode = root['oobtnode']
+    >>> oobtnode.attrs.foo
+    1
+    
+    >>> oobtnode.attrs.bar
+    <OOBTNode object 'bar' at ...>
 
 Fill root with some OOBTNodes and check memory usage::
 
@@ -326,9 +341,11 @@ Fill root with some OOBTNodes and check memory usage::
 
     >>> new_size = storage.getSize()
     >>> (new_size - old_size) / 1000
-    137L
+    136L
 
 Cleanup test environment::
-  
+
+    >>> connection.close()
+    >>> db.close()
     >>> import shutil
     >>> shutil.rmtree(tempdir)
