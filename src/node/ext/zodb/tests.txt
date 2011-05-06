@@ -1,59 +1,334 @@
 Setup environment.
 ::
 
+    >>> import os
+    >>> import tempfile
+    >>> tempdir = tempfile.mkdtemp()
     >>> import ZODB
-
     >>> from ZODB.FileStorage import FileStorage
     >>> from ZODB.DB import DB
-    >>> storage = FileStorage('Data.fs')
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
     >>> db = DB(storage)
     >>> connection = db.open()
     >>> root = connection.root()
 
-    >>> from node.ext.zodb import ZODBNode
-    >>> anode = ZODBNode('anode')
-    >>> anode
-    <ZODBNode object 'anode' at ...>
-    
-    >>> root[anode.__name__] = anode
-    >>> anode['child'] = ZODBNode('child')
-    >>> root
-    {'anode': <ZODBNode object 'anode' at ...>}
-    
-    >>> anode.keys()
-    ['child']
-    
-    >>> anode.values()
-    [<ZODBNode object 'child' at ...>]
-    
-    >>> anode['child']
-    <ZODBNode object 'child' at ...>
-    
-    >>> anode.printtree()
-    <class 'node.ext.zodb.ZODBNode'>: anode
-      <class 'node.ext.zodb.ZODBNode'>: child
+Test OOBTree persistence::
 
+    >>> from BTrees.OOBTree import OOBTree
+    >>> bt = OOBTree()
+    >>> root['btree'] = bt
+    >>> bt['key'] = [1, OOBTree(), 3]
+    >>> bt['key']
+    [1, <BTrees.OOBTree.OOBTree object at ...>, 3]
+    
     >>> import transaction
     >>> transaction.commit()
+    >>> connection.close()
+    >>> db.close()
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    >>> bt = root['btree']
+    >>> bt['key']
+    [1, <BTrees.OOBTree.OOBTree object at ...>, 3]
+    
+    >>> del root['btree']
+    >>> transaction.commit()
+
+Test OOBTodict::
+
+    >>> from node.ext.zodb import OOBTodict
+    >>> od = OOBTodict()
+    >>> od
+    OOBTodict()
+    
+    >>> od.__class__.__bases__
+    (<class 'odict.pyodict._odict'>, <type 'BTrees.OOBTree.OOBTree'>)
+    
+    >>> od['foo'] = OOBTodict()
+    >>> od['bar'] = OOBTodict()
+    >>> od['baz'] = OOBTodict()
+    >>> od
+    OOBTodict([('foo', OOBTodict()), ('bar', OOBTodict()), ('baz', OOBTodict())])
+    
+    >>> od._dict_impl().__getitem__(od, 'foo')
+    [nil, OOBTodict(), 'bar']
+    
+    >>> od.lt
+    'baz'
+    
+    >>> od.lh
+    'foo'
+    
+    >>> od.keys()
+    ['foo', 'bar', 'baz']
+    
+    >>> list(od.iterkeys())
+    ['foo', 'bar', 'baz']
+    
+    >>> od.values()
+    [OOBTodict(), OOBTodict(), OOBTodict()]
+    
+    >>> list(od.itervalues())
+    [OOBTodict(), OOBTodict(), OOBTodict()]
+    
+    >>> od.items()
+    [('foo', OOBTodict()), ('bar', OOBTodict()), ('baz', OOBTodict())]
+    
+    >>> list(od.iteritems())
+    [('foo', OOBTodict()), ('bar', OOBTodict()), ('baz', OOBTodict())]
+    
+    >>> [key for key in od]
+    ['foo', 'bar', 'baz']
+    
+    >>> od['foo']
+    OOBTodict()
+    
+    >>> del od['baz']
+    >>> od
+    OOBTodict([('foo', OOBTodict()), ('bar', OOBTodict())])
+    
+    >>> 'foo' in od
+    True
+    
+    >>> 'baz' in od
+    False
+    
+    >>> len(od)
+    2
+    
+    >>> od.get('foo')
+    OOBTodict()
+    
+    >>> od.get('baz')
+    
+    >>> od2 = od.copy()
+    >>> od2
+    OOBTodict([('foo', OOBTodict()), ('bar', OOBTodict())])
+    
+    >>> od is od2
+    False
+    
+    >>> od2.sort(reverse=True)
+    >>> od2.keys()
+    ['bar', 'foo']
+    
+    >>> od2.update([('bam', OOBTodict())])
+    >>> od2.keys()
+    ['bar', 'foo', 'bam']
+    
+    >>> od2.popitem()
+    ('bam', OOBTodict())
+    
+    >>> od2.keys()
+    ['bar', 'foo']
+    
+    >>> od
+    OOBTodict([('foo', OOBTodict()), ('bar', OOBTodict())])
+    
+    >>> od._dict_impl()
+    <type 'BTrees.OOBTree.OOBTree'>
+    
+    >>> list(od._dict_impl().items(od))
+    [('____lh', 'foo'), 
+    ('____lt', 'bar'), 
+    ('bar', ['foo', OOBTodict(), nil]), 
+    ('foo', [nil, OOBTodict(), 'bar'])]
+    
+    >>> od._dict_impl().__getitem__(od, 'bar')
+    ['foo', OOBTodict(), nil]
+    
+    >>> root['oobtodict'] = od
+    >>> transaction.commit()
     >>> root.keys()
-    ['anode']
+    ['oobtodict']
+    
+    >>> od.lt
+    'bar'
+    
+    >>> od.lh
+    'foo'
     
     >>> connection.close()
     >>> db.close()
-    
-    >>> storage = FileStorage('Data.fs')
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
     >>> db = DB(storage)
     >>> connection = db.open()
     >>> root = connection.root()
     >>> root.keys()
-    ['anode']
+    ['oobtodict']
     
-    >>> root['anode'].printtree()
-    <class 'node.ext.zodb.ZODBNode'>: anode
+    >>> od = root['oobtodict']
+    >>> list(od._dict_impl().keys(od))
+    ['____lh', '____lt', 'bar', 'foo']
+    
+    >>> od.lt
+    'bar'
+    
+    >>> od.lh
+    'foo'
+    
+    >>> od
+    OOBTodict([('foo', OOBTodict()), ('bar', OOBTodict())])
+    
+    >>> del root['oobtodict']
+
+ZODBNode. Based on PersistentDict as storage::
+
+    >>> from node.ext.zodb import ZODBNode
+    >>> zodbnode = ZODBNode('zodbnode')
+    >>> zodbnode
+    <ZODBNode object 'zodbnode' at ...>
+    
+    >>> root[zodbnode.__name__] = zodbnode
+    >>> zodbnode['child'] = ZODBNode('child')
+    >>> root
+    {'zodbnode': <ZODBNode object 'zodbnode' at ...>}
+    
+    >>> zodbnode.keys()
+    ['child']
+    
+    >>> zodbnode.values()
+    [<ZODBNode object 'child' at ...>]
+    
+    >>> zodbnode['child']
+    <ZODBNode object 'child' at ...>
+    
+    >>> zodbnode.printtree()
+    <class 'node.ext.zodb.ZODBNode'>: zodbnode
+      <class 'node.ext.zodb.ZODBNode'>: child
+
+    >>> zodbnode()
+    >>> root.keys()
+    ['zodbnode']
+    
+    >>> connection.close()
+    >>> db.close()
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    >>> root.keys()
+    ['zodbnode']
+    
+    >>> root['zodbnode'].printtree()
+    <class 'node.ext.zodb.ZODBNode'>: zodbnode
       <class 'node.ext.zodb.ZODBNode'>: child
     
-    >>> del root['anode']['child']
-    >>> transaction.commit()
+    >>> del root['zodbnode']['child']
+    >>> root['zodbnode']()
     
-    >>> root['anode'].printtree()
-    <class 'node.ext.zodb.ZODBNode'>: anode
+    >>> root['zodbnode'].printtree()
+    <class 'node.ext.zodb.ZODBNode'>: zodbnode
+    
+    >>> root['zodbnode'].attrs
+    <ZODBNodeAttributes object '_attrs' at ...>
+
+    >>> root['zodbnode'].attrs['foo'] = 1
+    >>> root['zodbnode'].attrs['bar'] = ZODBNode()
+    >>> root['zodbnode'].attrs.values()
+    [1, <ZODBNode object 'bar' at ...>]
+
+Fill root with some ZODBNodes and check memory usage::
+
+    >>> old_size = storage.getSize()
+    
+    >>> root['largezodb'] = ZODBNode('largezodb')
+    >>> for i in range(1000):
+    ...     root['largezodb'][str(i)] = ZODBNode()
+    
+    >>> len(root['largezodb'])
+    1000
+    
+    >>> root['largezodb']()
+
+    >>> new_size = storage.getSize()
+    >>> (new_size - old_size) / 1000
+    140L
+
+OOBTNode. Based on OOBTree as storage::
+
+    >>> from node.ext.zodb import OOBTNode
+    >>> oobtnode = OOBTNode('oobtnode')
+    >>> oobtnode
+    <OOBTNode object 'oobtnode' at ...>
+    
+    >>> root[oobtnode.__name__] = oobtnode
+    >>> oobtnode['child'] = OOBTNode('child')
+    >>> sorted(root.keys())
+    ['largezodb', 'oobtnode', 'zodbnode']
+    
+    >>> oobtnode.keys()
+    ['child']
+    
+    >>> oobtnode.values()
+    [<OOBTNode object 'child' at ...>]
+    
+    >>> oobtnode['child']
+    <OOBTNode object 'child' at ...>
+    
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: child
+      
+    >>> oobtnode.storage
+    OOBTodict([('child', <OOBTNode object 'child' at ...>)])
+
+    >>> oobtnode()
+    >>> connection.close()
+    >>> db.close()
+    
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    >>> sorted(root.keys())
+    ['largezodb', 'oobtnode', 'zodbnode']
+    
+    >>> root['oobtnode'].keys()
+    ['child']
+    
+    >>> root['oobtnode'].printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: child
+    
+    >>> del root['oobtnode']['child']
+    >>> root['oobtnode']()
+    
+    >>> root['oobtnode'].printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+    
+    >>> root['oobtnode'].attrs
+    <OOBTNodeAttributes object '_attrs' at ...>
+
+    >>> root['oobtnode'].attrs['foo'] = 1
+    >>> root['oobtnode'].attrs['bar'] = OOBTNode()
+    >>> root['oobtnode'].attrs.values()
+    [1, <OOBTNode object 'bar' at ...>]
+    
+    >>> root['oobtnode'].attribute_access_for_attrs = True
+    >>> root['oobtnode'].attrs.foo
+    1
+
+Fill root with some OOBTNodes and check memory usage::
+
+    >>> old_size = storage.getSize()
+    
+    >>> root['large'] = OOBTNode()
+    >>> for i in range(1000):
+    ...     root['large'][str(i)] = OOBTNode()
+    
+    >>> len(root['large'])
+    1000
+    
+    >>> root['large']()
+
+    >>> new_size = storage.getSize()
+    >>> (new_size - old_size) / 1000
+    137L
+
+Cleanup test environment::
+  
+    >>> import shutil
+    >>> shutil.rmtree(tempdir)
