@@ -29,7 +29,10 @@ from node.parts import (
     NodeChildValidate,
     Storage,
 )
-from node.utils import AttributeAccess
+from node.utils import (
+    AttributeAccess,
+    instance_property,
+)
 
 
 class Podict(_odict, PersistentDict):
@@ -43,7 +46,6 @@ class OOBTodict(_odict, OOBTree):
     def _dict_impl(self):
         return OOBTree
     
-    # Double-linked list header
     def _get_lh(self):
         try:
             return self['____lh']
@@ -56,7 +58,6 @@ class OOBTodict(_odict, OOBTree):
 
     lh = property(_get_lh, _set_lh)
 
-    # Double-linked list tail
     def _get_lt(self):
         try:
             return self['____lt']
@@ -93,21 +94,17 @@ class OOBTodict(_odict, OOBTree):
 class PodictStorage(Storage):
     
     @default
-    @property
+    @instance_property
     def storage(self):
-        if not hasattr(self, '_storage_data'):
-            self._storage_data = Podict()
-        return self._storage_data
+        return Podict()
 
 
 class OOBTodictStorage(Storage):
     
     @default
-    @property
+    @instance_property
     def storage(self):
-        if not hasattr(self, '_storage_data'):
-            self._storage_data = OOBTodict()
-        return self._storage_data
+        return OOBTodict()
 
 
 class ZODBPart(Part):
@@ -149,9 +146,6 @@ class ZODBAttributes(Part):
         if self.attribute_access_for_attrs:
             return AttributeAccess(attrs)
         return attrs
-    
-    # BBB
-    attributes = finalize(attrs)
 
 
 class ZODBNodeAttributes(Persistent):
@@ -172,11 +166,11 @@ class ZODBNode(Persistent):
     __plumbing__ = (
         NodeChildValidate,
         Adopt,
-        ZODBAttributes,
         Order,
         AsAttrAccess,
         DefaultInit,
         Nodify,
+        ZODBAttributes,
         ZODBPart,
         PodictStorage,
     )
@@ -201,12 +195,25 @@ class OOBTNode(Persistent):
     __plumbing__ = (
         NodeChildValidate,
         Adopt,
-        ZODBAttributes,
         Order,
         AsAttrAccess,
         DefaultInit,
         Nodify,
+        ZODBAttributes,
         ZODBPart,
         OOBTodictStorage,
     )
     attributes_factory = OOBTNodeAttributes
+
+
+def volatile_property(func):
+    """Like ``node.utils.instance_property``, but sets instance attribute
+    with '_v_' prefix.
+    """
+    def wrapper(self):
+        attribute_name = '_v_%s' % func.__name__
+        if not hasattr(self, attribute_name):
+            setattr(self, attribute_name, func(self))
+        return getattr(self, attribute_name)
+    wrapper.__doc__ = func.__doc__
+    return property(wrapper)
