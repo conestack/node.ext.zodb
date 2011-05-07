@@ -109,28 +109,6 @@ class OOBTodictStorage(Storage):
 
 class ZODBPart(Part):
     
-    def _get_parent(self):
-        if hasattr(self, '_parent'):
-            return self._parent
-        if hasattr(self, '_v_parent'):
-            return self._v_parent
-        return None
-     
-    def _set_parent(self, val):
-        if isinstance(val, Persistent):
-            self._parent = val
-        else:
-            self._v_parent = val
-    
-    __parent__ = extend(property(_get_parent, _set_parent))
-    
-    @extend
-    def __getitem__(self, key):
-        val = self.storage[key]
-        if INode.providedBy(val):
-            val.__parent__ = self
-        return val
-    
     @extend
     def __call__(self):
         transaction.commit()
