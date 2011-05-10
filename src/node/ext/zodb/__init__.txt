@@ -109,7 +109,7 @@ Test OOBTodict::
     
     >>> od is od2
     False
-    
+
     >>> od2.sort(reverse=True)
     >>> od2.keys()
     ['bar', 'foo']
@@ -345,6 +345,33 @@ Fill root with some OOBTNodes and check memory usage::
     >>> new_size = storage.getSize()
     >>> (new_size - old_size) / 1000
     168L
+
+Test ``volatile_property``::
+
+    >>> from node.ext.zodb import volatile_property
+    >>> class PropTest(object):
+    ...     @volatile_property
+    ...     def foo(self):
+    ...         return 'foo'
+    
+    >>> inst = PropTest()
+    >>> 'foo' in dir(inst)
+    True
+    
+    >>> '_v_foo' in dir(inst)
+    False
+    
+    >>> inst.foo
+    'foo'
+    
+    >>> '_v_foo' in dir(inst)
+    True
+    
+    >>> inst._v_foo
+    'foo'
+    
+    >>> inst._v_foo is inst.foo
+    True
 
 Cleanup test environment::
 
