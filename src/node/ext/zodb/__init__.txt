@@ -328,6 +328,32 @@ OOBTNode. Based on OOBTree as storage::
     
     >>> oobtnode.attrs.bar
     <OOBTNode object 'bar' at ...>
+    
+    >>> oobtnode.attrs.foo = 2
+    >>> oobtnode.attrs.foo
+    2
+    
+    >>> oobtnode.attribute_access_for_attrs = False
+    >>> oobtnode.attrs.storage
+    OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
+    
+    >>> oobtnode.attrs._storage
+    OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
+    
+    >>> oobtnode.attrs.storage is oobtnode.attrs._storage
+    True
+    
+    >>> oobtnode()
+    >>> connection.close()
+    >>> db.close()
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    >>> oobtnode = root['oobtnode']
+    >>> oobtnode.attribute_access_for_attrs = False
+    >>> oobtnode.attrs.storage
+    OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
 
 Fill root with some OOBTNodes and check memory usage::
 

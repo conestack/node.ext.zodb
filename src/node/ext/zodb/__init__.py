@@ -5,6 +5,7 @@ from plumber import (
     default,
     extend,
     finalize,
+    plumb,
 )
 from odict.pyodict import (
     _odict,
@@ -123,6 +124,11 @@ class ZODBPart(Part):
     @extend
     def __call__(self):
         transaction.commit()
+    
+    @plumb
+    def __setitem__(_next, self, key, value):
+        _next(self, key, value)
+        self.storage._p_changed = 1
 
 
 class PodictStorage(ZODBPart, Storage):
