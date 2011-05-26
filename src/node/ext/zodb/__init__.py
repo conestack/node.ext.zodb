@@ -91,7 +91,41 @@ class OOBTodict(_odict, OOBTree):
             return "OOBTodict()"
 
 
-class PodictStorage(Storage):
+class ZODBPart(Part):
+    """This part requires plumbed class to inherit from Persistent.
+    """
+    
+    @extend
+    @property
+    def __parent__(self):
+        """Always expect _v_parent to be set, see __setattr__ and
+        __getitem__.
+        """
+        return self._v_parent
+    
+    @extend
+    def __getitem__(self, key):
+        v = self.storage[key]
+        if INode.providedBy(v):
+            v._v_parent = self
+        return v
+    
+    @extend
+    def __setattr__(self, name, value):
+        """If name is __parent__, write value to _v_parent. This avoids
+        _p_changed to be set set by Persitent.__setattr__. Using a read/write
+        property for __name__ won't work.
+        """
+        if name == '__parent__':
+            name = '_v_parent'
+        Persistent.__setattr__(self, name, value)
+    
+    @extend
+    def __call__(self):
+        transaction.commit()
+
+
+class PodictStorage(ZODBPart, Storage):
     
     @default
     @instance_property
@@ -99,19 +133,12 @@ class PodictStorage(Storage):
         return Podict()
 
 
-class OOBTodictStorage(Storage):
+class OOBTodictStorage(ZODBPart, Storage):
     
     @default
     @instance_property
     def storage(self):
         return OOBTodict()
-
-
-class ZODBPart(Part):
-    
-    @extend
-    def __call__(self):
-        transaction.commit()
 
 
 class ZODBAttributes(Part):
@@ -140,7 +167,6 @@ class ZODBNodeAttributes(Persistent):
         Adopt,
         DefaultInit,
         Nodify,
-        ZODBPart,
         PodictStorage,
     )
     allow_non_node_childs = True
@@ -156,12 +182,11 @@ class ZODBNode(Persistent):
         DefaultInit,
         Nodify,
         ZODBAttributes,
-        ZODBPart,
         PodictStorage,
     )
     attributes_factory = ZODBNodeAttributes
-   
-    
+
+
 class OOBTNodeAttributes(Persistent):
     __metaclass__ = plumber
     __plumbing__ = (
@@ -169,7 +194,6 @@ class OOBTNodeAttributes(Persistent):
         Adopt,
         DefaultInit,
         Nodify,
-        ZODBPart,
         OOBTodictStorage,
     )
     allow_non_node_childs = True
@@ -185,7 +209,6 @@ class OOBTNode(Persistent):
         DefaultInit,
         Nodify,
         ZODBAttributes,
-        ZODBPart,
         OOBTodictStorage,
     )
     attributes_factory = OOBTNodeAttributes
