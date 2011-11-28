@@ -127,7 +127,7 @@ class ZODBPart(Part):
             name = '_v_parent'
         Persistent.__setattr__(self, name, value)
     
-    @extend
+    @default
     def __call__(self):
         """Meant to be plumbed if something should happen in a particular
         subclass on __call__. Persisting is left to the ZODB transaction
