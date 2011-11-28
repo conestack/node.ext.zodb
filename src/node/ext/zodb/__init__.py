@@ -1,4 +1,4 @@
-import transaction
+import copy
 from plumber import (
     plumber,
     Part,
@@ -123,12 +123,20 @@ class ZODBPart(Part):
     
     @extend
     def __call__(self):
-        transaction.commit()
+        """Meant to be plumbed if something should happen in a particular
+        subclass on __call__. Persisting is left to the ZODB transaction
+        mechanism.
+        """
+        pass
     
     @plumb
     def __setitem__(_next, self, key, value):
         _next(self, key, value)
         self.storage._p_changed = 1
+    
+    @finalize
+    def copy(self):
+        return copy.deepcopy(self)
 
 
 class PodictStorage(ZODBPart, Storage):

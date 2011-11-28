@@ -1,5 +1,4 @@
-Setup environment.
-::
+Setup environment::
 
     >>> import os
     >>> import tempfile
@@ -202,10 +201,10 @@ ZODBNode. Based on PersistentDict as storage::
     <class 'node.ext.zodb.ZODBNode'>: zodbnode
       <class 'node.ext.zodb.ZODBNode'>: child
 
-    >>> zodbnode()
     >>> root.keys()
     ['zodbnode']
     
+    >>> transaction.commit()
     >>> connection.close()
     >>> db.close()
     >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
@@ -220,7 +219,6 @@ ZODBNode. Based on PersistentDict as storage::
       <class 'node.ext.zodb.ZODBNode'>: child
     
     >>> del root['zodbnode']['child']
-    >>> root['zodbnode']()
     
     >>> root['zodbnode'].printtree()
     <class 'node.ext.zodb.ZODBNode'>: zodbnode
@@ -232,6 +230,8 @@ ZODBNode. Based on PersistentDict as storage::
     >>> root['zodbnode'].attrs['bar'] = ZODBNode()
     >>> root['zodbnode'].attrs.values()
     [1, <ZODBNode object 'bar' at ...>]
+    
+    >>> transaction.commit()
 
 Fill root with some ZODBNodes and check memory usage::
 
@@ -244,11 +244,11 @@ Fill root with some ZODBNodes and check memory usage::
     >>> len(root['largezodb'])
     1000
     
-    >>> root['largezodb']()
+    >>> transaction.commit()
 
     >>> new_size = storage.getSize()
     >>> (new_size - old_size) / 1000
-    140L
+    139L
 
 OOBTNode. Based on OOBTree as storage::
 
@@ -278,7 +278,7 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.storage
     OOBTodict([('child', <OOBTNode object 'child' at ...>)])
 
-    >>> oobtnode()
+    >>> transaction.commit()
     >>> connection.close()
     >>> db.close()
     >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
@@ -300,7 +300,7 @@ OOBTNode. Based on OOBTree as storage::
     <OOBTNode object 'oobtnode' at ...>
     
     >>> del oobtnode['child']
-    >>> oobtnode()
+    >>> transaction.commit()
     
     >>> oobtnode.printtree()
     <class 'node.ext.zodb.OOBTNode'>: oobtnode
@@ -317,7 +317,7 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.attrs.foo
     1
     
-    >>> oobtnode()
+    >>> transaction.commit()
     >>> connection.close()
     >>> db.close()
     >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
@@ -346,7 +346,7 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.attrs.storage is oobtnode.attrs._storage
     True
     
-    >>> oobtnode()
+    >>> transaction.commit()
     >>> connection.close()
     >>> db.close()
     >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
@@ -357,6 +357,102 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.attribute_access_for_attrs = False
     >>> oobtnode.attrs.storage
     OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
+
+Test copy and detach::
+
+    >>> oobtnode['c1'] = OOBTNode()
+    >>> oobtnode['c2'] = OOBTNode()
+    >>> oobtnode['c3'] = OOBTNode()
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c2
+      <class 'node.ext.zodb.OOBTNode'>: c3
+
+Detach c1::
+
+    >>> c1 = oobtnode.detach('c1')
+    >>> c1
+    <OOBTNode object 'c1' at ...>
+    
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: c2
+      <class 'node.ext.zodb.OOBTNode'>: c3
+
+Add c1 as child to c2::
+
+    >>> oobtnode['c2'][c1.name] = c1
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: c2
+        <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c3
+
+Commit and re-read::
+
+    >>> transaction.commit()
+    >>> connection.close()
+    >>> db.close()
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    >>> oobtnode = root['oobtnode']
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: c2
+        <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c3
+
+Copy c1::
+
+    >>> c1_copy = oobtnode['c2']['c1'].copy()
+    >>> c1_copy is oobtnode['c2']['c1']
+    False
+    
+    >>> oobtnode['c1'] = c1_copy
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: c2
+        <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c3
+      <class 'node.ext.zodb.OOBTNode'>: c1
+    
+    >>> oobtnode['c4'] = oobtnode['c2'].copy()
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: c2
+        <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c3
+      <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c4
+        <class 'node.ext.zodb.OOBTNode'>: c1
+    
+    >>> oobtnode['c2']['c1'] is oobtnode['c4']['c1']
+    False
+    
+    >>> oobtnode['c2']['c1'].attrs is oobtnode['c4']['c1'].attrs
+    False
+
+    >>> transaction.commit()
+
+Swap nodes::
+
+    >>> oobtnode.swap(oobtnode['c1'], oobtnode['c3'])
+    >>> oobtnode.swap(oobtnode['c1'], oobtnode['c2'])
+    >>> oobtnode.printtree()
+    <class 'node.ext.zodb.OOBTNode'>: oobtnode
+      <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c2
+        <class 'node.ext.zodb.OOBTNode'>: c1
+      <class 'node.ext.zodb.OOBTNode'>: c3
+      <class 'node.ext.zodb.OOBTNode'>: c4
+        <class 'node.ext.zodb.OOBTNode'>: c1
+
+Calling nodes does nothing, persisting is left to transaction mechanism::
+
+    >>> oobtnode()
 
 Fill root with some OOBTNodes and check memory usage::
 
@@ -369,7 +465,7 @@ Fill root with some OOBTNodes and check memory usage::
     >>> len(root['large'])
     1000
     
-    >>> root['large']()
+    >>> transaction.commit()
 
     >>> new_size = storage.getSize()
     >>> (new_size - old_size) / 1000
