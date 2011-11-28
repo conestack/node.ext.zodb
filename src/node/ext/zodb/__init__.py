@@ -92,9 +92,15 @@ class OOBTodict(_odict, OOBTree):
             return "OOBTodict()"
 
 
+class IZODBNode(INode):
+    """Marker for ZODB nodes.
+    """
+
+
 class ZODBPart(Part):
     """This part requires plumbed class to inherit from Persistent.
     """
+    implements(IZODBNode)
     
     @extend
     @property

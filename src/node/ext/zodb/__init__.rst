@@ -178,10 +178,14 @@ Test OOBTodict::
 
 ZODBNode. Based on PersistentDict as storage::
 
+    >>> from node.ext.zodb import IZODBNode
     >>> from node.ext.zodb import ZODBNode
     >>> zodbnode = ZODBNode('zodbnode')
     >>> zodbnode
     <ZODBNode object 'zodbnode' at ...>
+    
+    >>> IZODBNode.providedBy(zodbnode)
+    True
     
     >>> root[zodbnode.__name__] = zodbnode
     >>> zodbnode['child'] = ZODBNode('child')
@@ -256,6 +260,9 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode = OOBTNode('oobtnode')
     >>> oobtnode
     <OOBTNode object 'oobtnode' at ...>
+    
+    >>> IZODBNode.providedBy(oobtnode)
+    True
     
     >>> root[oobtnode.__name__] = oobtnode
     >>> oobtnode['child'] = OOBTNode('child')
