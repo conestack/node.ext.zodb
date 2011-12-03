@@ -48,7 +48,7 @@ class ZODBPart(Part):
     def __setattr__(self, name, value):
         """If name is __parent__, write value to _v_parent. This avoids
         _p_changed to be set set by Persitent.__setattr__. Using a read/write
-        property for __name__ won't work.
+        property for __parent__ won't work.
         """
         if name == '__parent__':
             name = '_v_parent'
