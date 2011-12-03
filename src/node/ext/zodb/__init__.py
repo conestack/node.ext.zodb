@@ -22,10 +22,10 @@ from node.ext.zodb.utils import (
 )
 
 
-attribute_parts = (
+ZODB_ATTRIBUTE_PARTS = (
     NodeChildValidate, Adopt, DefaultInit, Nodify
 )
-node_parts = (
+ZODB_NODE_PARTS = (
     NodeChildValidate, Adopt, Order, AsAttrAccess,
     DefaultInit, Nodify, ZODBAttributes
 )
@@ -33,23 +33,23 @@ node_parts = (
 
 class ZODBNodeAttributes(Persistent):
     __metaclass__ = plumber
-    __plumbing__ = attribute_parts + (PodictStorage,)
+    __plumbing__ = ZODB_ATTRIBUTE_PARTS + (PodictStorage,)
     allow_non_node_childs = True
 
 
 class ZODBNode(Persistent):
     __metaclass__ = plumber
-    __plumbing__ = node_parts + (PodictStorage,)
+    __plumbing__ = ZODB_NODE_PARTS + (PodictStorage,)
     attributes_factory = ZODBNodeAttributes
 
 
 class OOBTNodeAttributes(Persistent):
     __metaclass__ = plumber
-    __plumbing__ = attribute_parts + (OOBTodictStorage,)
+    __plumbing__ = ZODB_ATTRIBUTE_PARTS + (OOBTodictStorage,)
     allow_non_node_childs = True
 
 
 class OOBTNode(Persistent):
     __metaclass__ = plumber
-    __plumbing__ = node_parts + (OOBTodictStorage,)
+    __plumbing__ = ZODB_NODE_PARTS + (OOBTodictStorage,)
     attributes_factory = OOBTNodeAttributes
