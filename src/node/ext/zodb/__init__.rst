@@ -112,7 +112,10 @@ Test OOBTodict::
     >>> od2.keys()
     ['foo', 'bar']
 
-    >>> od2.sort(reverse=True)
+    >>> od2.sort(key=lambda x: x[0])
+    >>> od2
+    OOBTodict([('bar', OOBTodict()), ('foo', OOBTodict())])
+    
     >>> od2.keys()
     ['bar', 'foo']
     
