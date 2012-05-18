@@ -7,7 +7,7 @@ from plumber import (
     plumb,
 )
 from persistent import Persistent
-from zope.interface import implements
+from zope.interface import implementer
 from node.interfaces import (
     INode,
     IAttributes,
@@ -24,10 +24,10 @@ from node.ext.zodb.utils import (
 )
 
 
+@implementer(IZODBNode)
 class ZODBPart(Part):
     """This part requires plumbed class to inherit from Persistent.
     """
-    implements(IZODBNode)
     
     @extend
     @property
@@ -88,9 +88,8 @@ class OOBTodictStorage(ZODBPart, Storage):
         return OOBTodict()
 
 
+@implementer(IAttributes)
 class ZODBAttributes(Part):
-    implements(IAttributes)
-    
     attribute_access_for_attrs = default(False)
     attributes_factory = default(None)
 
