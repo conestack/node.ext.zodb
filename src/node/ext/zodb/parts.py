@@ -11,6 +11,7 @@ from zope.interface import implementer
 from node.interfaces import (
     INode,
     IAttributes,
+    IOrdered,
 )
 from node.parts import Storage
 from node.utils import (
@@ -72,6 +73,7 @@ class ZODBPart(Part):
         return copy.deepcopy(self)
 
 
+@implementer(IOrdered)
 class PodictStorage(ZODBPart, Storage):
     
     @default
@@ -80,6 +82,7 @@ class PodictStorage(ZODBPart, Storage):
         return Podict()
 
 
+@implementer(IOrdered)
 class OOBTodictStorage(ZODBPart, Storage):
     
     @default
