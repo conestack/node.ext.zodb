@@ -10,7 +10,7 @@ from node.behaviors import (
 )
 from node.ext.zodb.interfaces import IZODBNode
 from node.ext.zodb.behaviors import (
-    ZODBPart,
+    ZODBBehavior,
     PodictStorage,
     OOBTodictStorage,
     ZODBAttributes,

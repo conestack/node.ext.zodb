@@ -1,6 +1,6 @@
 import copy
 from plumber import (
-    Part,
+    Behavior,
     default,
     extend,
     finalize,
@@ -26,7 +26,7 @@ from node.ext.zodb.utils import (
 
 
 @implementer(IZODBNode)
-class ZODBPart(Part):
+class ZODBBehavior(Behavior):
     """This part requires plumbed class to inherit from Persistent.
     """
     
@@ -74,7 +74,7 @@ class ZODBPart(Part):
 
 
 @implementer(IOrdered)
-class PodictStorage(ZODBPart, Storage):
+class PodictStorage(ZODBBehavior, Storage):
     
     @default
     @instance_property
@@ -83,7 +83,7 @@ class PodictStorage(ZODBPart, Storage):
 
 
 @implementer(IOrdered)
-class OOBTodictStorage(ZODBPart, Storage):
+class OOBTodictStorage(ZODBBehavior, Storage):
     
     @default
     @instance_property
@@ -92,7 +92,7 @@ class OOBTodictStorage(ZODBPart, Storage):
 
 
 @implementer(IAttributes)
-class ZODBAttributes(Part):
+class ZODBAttributes(Behavior):
     attribute_access_for_attrs = default(False)
     attributes_factory = default(None)
 
