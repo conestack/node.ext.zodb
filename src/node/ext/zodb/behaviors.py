@@ -2,7 +2,7 @@ import copy
 from plumber import (
     Behavior,
     default,
-    extend,
+    override,
     finalize,
     plumb,
 )
@@ -30,7 +30,7 @@ class ZODBBehavior(Behavior):
     """This part requires plumbed class to inherit from Persistent.
     """
     
-    @extend
+    @override
     @property
     def __parent__(self):
         """Always expect _v_parent to be set, see __setattr__ and
@@ -38,14 +38,14 @@ class ZODBBehavior(Behavior):
         """
         return self._v_parent
     
-    @extend
+    @override
     def __getitem__(self, key):
         v = self.storage[key]
         if INode.providedBy(v):
             v._v_parent = self
         return v
     
-    @extend
+    @override
     def __setattr__(self, name, value):
         """If name is __parent__, write value to _v_parent. This avoids
         _p_changed to be set set by Persitent.__setattr__. Using a read/write
