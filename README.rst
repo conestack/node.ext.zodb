@@ -13,7 +13,9 @@ We'd be happy to see many forks and pull-requests to make it even better.
 Contributors
 ============
 
-- Robert Niederreiter <irnix@squarewave.at>
+- Robert Niederreiter <rnix@squarewave.at>
+
+- Jens Klein <jk@kleinundparter.at>
 
 
 

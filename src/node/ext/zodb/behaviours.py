@@ -13,7 +13,7 @@ from node.interfaces import (
     IAttributes,
     IOrdered,
 )
-from node.parts import Storage
+from node.behaviors import Storage
 from node.utils import (
     AttributeAccess,
     instance_property,

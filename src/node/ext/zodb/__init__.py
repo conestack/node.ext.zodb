@@ -1,6 +1,6 @@
 from plumber import plumber
 from persistent import Persistent
-from node.parts import (
+from node.behaviors import (
     Adopt,
     Order,
     AsAttrAccess,
@@ -9,7 +9,7 @@ from node.parts import (
     NodeChildValidate,
 )
 from node.ext.zodb.interfaces import IZODBNode
-from node.ext.zodb.parts import (
+from node.ext.zodb.behaviors import (
     ZODBPart,
     PodictStorage,
     OOBTodictStorage,
