@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.9pre3'
+version = '1.0-beta1'
 shortdesc = 'Node Implementation with ZODB persistence'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 longdesc += open(os.path.join(os.path.dirname(__file__), 'CHANGES.rst')).read()
@@ -12,7 +12,7 @@ setup(name='node.ext.zodb',
       description=shortdesc,
       long_description=longdesc,
       classifiers=[
-            'Development Status :: 3 - Alpha',
+            'Development Status :: 4 - Beta',
             'Operating System :: OS Independent',
             'Programming Language :: Python', 
             'Topic :: Utilities',
