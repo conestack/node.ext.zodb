@@ -9,6 +9,9 @@ The sources are in a GIT DVCS with its main branches at
 
 We'd be happy to see many forks and pull-requests to make it even better.
 
+Travis-CI test state
+.. image:: https://secure.travis-ci.org/bluedynamics/node.ext.zodb.png
+
 
 Contributors
 ============
