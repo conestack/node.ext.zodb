@@ -1,4 +1,6 @@
-``node.ext.zodb`` is a persistent node implemenatation for the ZODB.
+``node.ext.zodb`` is a persistent node implementation for the ZODB.
+
+For more information about ``node`` see https://pypi.python.org/pypi/node
 
 
 Source Code
