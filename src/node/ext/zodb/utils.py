@@ -7,16 +7,16 @@ from BTrees.OOBTree import OOBTree
 
 
 class Podict(_odict, PersistentDict):
-    
+
     def _dict_impl(self):
         return PersistentDict
 
 
 class OOBTodict(_odict, OOBTree):
-    
+
     def _dict_impl(self):
         return OOBTree
-    
+
     def _get_lh(self):
         try:
             return self['____lh']
@@ -40,12 +40,12 @@ class OOBTodict(_odict, OOBTree):
         self['____lt'] = val
 
     lt = property(_get_lt, _set_lt)
-    
+
     def __getitem__(self, key):
         if key.startswith('____'):
             return self._dict_impl().__getitem__(self, key)
         return _odict.__getitem__(self, key)
-    
+
     def __setitem__(self, key, val):
         if key.startswith('____'):
             # private attributes, no way to set persistent attributes on
@@ -53,7 +53,7 @@ class OOBTodict(_odict, OOBTree):
             self._dict_impl().__setitem__(self, key, val)
         else:
             _odict.__setitem__(self, key, val)
-    
+
     def __repr__(self):
         if self:
             pairs = ("(%r, %r)" % (k, v) for k, v in self.iteritems())
