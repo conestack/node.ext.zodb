@@ -147,11 +147,13 @@ def check_odict_consistency(od, ignore_key=None):
     if ignore_key is not None:
         orgin_keys = [_ for _ in orgin_keys if not ignore_key(_)]
     try:
-        od[od.lh]
+        if od.lh != _nil:
+            od[od.lh]
     except KeyError, e:
         raise ListHeadInconsistency(e, orgin_keys)
     try:
-        od[od.lt]
+        if od.lt != _nil:
+            od[od.lt]
     except KeyError, e:
         raise ListTailInconsistency(e, orgin_keys)
     try:
