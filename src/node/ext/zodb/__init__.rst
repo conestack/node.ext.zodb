@@ -1,3 +1,6 @@
+node.ext.zodb
+=============
+
 Setup environment::
 
     >>> import os
@@ -10,6 +13,10 @@ Setup environment::
     >>> db = DB(storage)
     >>> connection = db.open()
     >>> root = connection.root()
+
+
+OOBTree
+=======
 
 Test OOBTree persistence::
 
@@ -41,6 +48,10 @@ Delete OOBTree::
 
     >>> del root['btree']
     >>> transaction.commit()
+
+
+OOBTodict
+=========
 
 Test OOBTodict::
 
@@ -283,7 +294,11 @@ Delete from database::
 
     >>> del root['oobtodict']
 
-ZODBNode. Based on PersistentDict as storage::
+
+ZODBNode
+========
+
+Based on PersistentDict as storage::
 
     >>> from node.ext.zodb import IZODBNode
     >>> from node.ext.zodb import ZODBNode
@@ -291,8 +306,12 @@ ZODBNode. Based on PersistentDict as storage::
     >>> zodbnode
     <ZODBNode object 'zodbnode' at ...>
 
+Interface check::
+
     >>> IZODBNode.providedBy(zodbnode)
     True
+
+Structure check::
 
     >>> root[zodbnode.__name__] = zodbnode
     >>> zodbnode['child'] = ZODBNode('child')
@@ -315,6 +334,8 @@ ZODBNode. Based on PersistentDict as storage::
     >>> root.keys()
     ['zodbnode']
 
+Reopen database connection and check again::
+
     >>> transaction.commit()
     >>> connection.close()
     >>> db.close()
@@ -329,10 +350,14 @@ ZODBNode. Based on PersistentDict as storage::
     <class 'node.ext.zodb.ZODBNode'>: zodbnode
       <class 'node.ext.zodb.ZODBNode'>: child
 
+Delete child node::
+
     >>> del root['zodbnode']['child']
 
     >>> root['zodbnode'].printtree()
     <class 'node.ext.zodb.ZODBNode'>: zodbnode
+
+Check node attributes::
 
     >>> root['zodbnode'].attrs
     <ZODBNodeAttributes object '_attrs' at ...>
@@ -361,15 +386,23 @@ Fill root with some ZODBNodes and check memory usage::
     >>> (new_size - old_size) / 1000
     139L
 
-OOBTNode. Based on OOBTree as storage::
+
+OOBTNode
+========
+
+Based on OOBTree as storage::
 
     >>> from node.ext.zodb import OOBTNode
     >>> oobtnode = OOBTNode('oobtnode')
     >>> oobtnode
     <OOBTNode object 'oobtnode' at ...>
 
+Interface check::
+
     >>> IZODBNode.providedBy(oobtnode)
     True
+
+Structure check::
 
     >>> root[oobtnode.__name__] = oobtnode
     >>> oobtnode['child'] = OOBTNode('child')
@@ -392,6 +425,8 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.storage
     OOBTodict([('child', <OOBTNode object 'child' at ...>)])
 
+Reopen database connection and check again::
+
     >>> transaction.commit()
     >>> connection.close()
     >>> db.close()
@@ -413,11 +448,15 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode['child'].__parent__
     <OOBTNode object 'oobtnode' at ...>
 
+Delete child node::
+
     >>> del oobtnode['child']
     >>> transaction.commit()
 
     >>> oobtnode.printtree()
     <class 'node.ext.zodb.OOBTNode'>: oobtnode
+
+Check node attributes::
 
     >>> oobtnode.attrs
     <OOBTNodeAttributes object '_attrs' at ...>
@@ -427,9 +466,13 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.attrs.values()
     [1, <OOBTNode object 'bar' at ...>]
 
+Check attribute access for node attributes::
+
     >>> oobtnode.attribute_access_for_attrs = True
     >>> oobtnode.attrs.foo
     1
+
+Check whether flag has been persisted::
 
     >>> transaction.commit()
     >>> connection.close()
@@ -451,6 +494,9 @@ OOBTNode. Based on OOBTree as storage::
     2
 
     >>> oobtnode.attribute_access_for_attrs = False
+
+Check attrs storage::
+
     >>> oobtnode.attrs.storage
     OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
 
@@ -471,6 +517,53 @@ OOBTNode. Based on OOBTree as storage::
     >>> oobtnode.attribute_access_for_attrs = False
     >>> oobtnode.attrs.storage
     OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
+
+Check internal datastructure of attrs::
+
+    >>> storage = oobtnode.attrs.storage
+    >>> storage._dict_impl()
+    <type 'BTrees.OOBTree.OOBTree'>
+
+    >>> keys = [_ for _ in storage._dict_impl().keys(storage)]
+    >>> sorted(keys)
+    ['____lh', '____lt', 'bar', 'foo']
+
+values ``foo`` and ``bar`` are list tail and list head values::
+
+    >>> values = [_ for _ in storage._dict_impl().values(storage)]
+    >>> sorted(values)
+    [[nil, 2, 'bar'], 
+    ['foo', <OOBTNode object 'bar' at ...>, nil], 
+    'bar', 
+    'foo']
+
+    >>> storage.lt
+    'bar'
+
+    >>> storage.lh
+    'foo'
+
+Add attribute, reopen database connection and check again::
+
+    >>> oobtnode.attrs['baz'] = 'some added value'
+
+    >>> transaction.commit()
+    >>> connection.close()
+    >>> db.close()
+    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+    >>> oobtnode = root['oobtnode']
+
+    >>> storage = oobtnode.attrs.storage
+    >>> values = [_ for _ in storage._dict_impl().values(storage)]
+    >>> sorted(values)
+    [[nil, 2, 'bar'], 
+    ['bar', 'some added value', nil], 
+    ['foo', <OOBTNode object 'bar' at ...>, 'baz'], 
+    'baz', 
+    'foo']
 
 Test copy and detach::
 
@@ -503,7 +596,7 @@ Add c1 as child to c2::
         <class 'node.ext.zodb.OOBTNode'>: c1
       <class 'node.ext.zodb.OOBTNode'>: c3
 
-Commit and re-read::
+Reopen database connection and check again::
 
     >>> transaction.commit()
     >>> connection.close()
@@ -584,6 +677,10 @@ Fill root with some OOBTNodes and check memory usage::
     >>> new_size = storage.getSize()
     >>> (new_size - old_size) / 1000
     136L
+
+
+Utils
+=====
 
 Test ``volatile_property``::
 
