@@ -788,6 +788,27 @@ Manually sanitize odict::
     >>> od.lt = 'baz'
     >>> check_odict_consistency(od, ignore_key=ignore_key)
 
+Reset odict::
+
+    >>> od.lh = 'inexistent'
+    >>> od.lt = 'baz'
+    >>> dict_impl.__setitem__(od, 'foo', ['123', 'foo', 'bar'])
+    >>> dict_impl.__setitem__(od, '123', [_nil, 'foo', _nil])
+
+    >>> from node.ext.zodb.utils import reset_odict
+    >>> reset_odict(od, ignore_key=ignore_key)
+
+    >>> od.lh
+    '123'
+
+    >>> od.lt
+    'foo'
+
+    >>> od
+    OOBTodict([('123', 'foo'), ('bar', 'bar'), ('baz', 'baz'), ('foo', 'foo')])
+
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+
 Cleanup test environment::
 
     >>> connection.close()

@@ -160,3 +160,20 @@ def check_odict_consistency(od, ignore_key=None):
         raise ListReferenceInconsistency(e, orgin_keys)
     if len(orgin_keys) != len(od_keys):
         raise UnexpextedEndOfList(od_keys, orgin_keys)
+
+
+def reset_odict(od, ignore_key=None):
+    """Reset odict. Order will break.
+    """
+    dict_impl = od._dict_impl()
+    keys = dict_impl.keys(od)
+    if ignore_key is not None:
+        keys = [_ for _ in keys if not ignore_key(_)]
+    items = []
+    for key in keys:
+        items.append((key, dict_impl.__getitem__(od, key)))
+    dict_impl.clear(od)
+    od.lh = _nil
+    od.lt = _nil
+    for k, v in items:
+        od[k] = v[1]
