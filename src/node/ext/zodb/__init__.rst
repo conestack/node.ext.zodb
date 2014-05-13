@@ -709,6 +709,85 @@ Test ``volatile_property``::
     >>> inst._v_foo is inst.foo
     True
 
+Check odict consistency::
+
+    >>> from odict.pyodict import _nil
+    >>> from node.ext.zodb.utils import check_odict_consistency
+
+    >>> od = OOBTodict()
+    >>> od['foo'] = 'foo'
+    >>> od['bar'] = 'bar'
+    >>> od['baz'] = 'baz'
+
+Ignore key callback for OOBTree odicts needs to ignore keys starting with
+four underscores since these entries define the object attributes::
+
+    >>> ignore_key = lambda x: x.startswith('____')
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+
+Check if ``_nil`` marker set irregulary::
+
+    >>> dict_impl = od._dict_impl()
+    >>> dict_impl.__setitem__(od, 'bam', ['foo', 'bam', _nil])
+    >>> od.keys()
+    ['foo', 'bar', 'baz']
+
+    >>> sorted([_ for _ in dict_impl.keys(od)])
+    ['____lh', '____lt', 'bam', 'bar', 'baz', 'foo']
+
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+    Traceback (most recent call last):
+      ...
+    ConsistencyError: Given odict based implementation double linked list 
+    structure broken. Key count does not match: 4 != 3
+
+Manually sanitize odict::
+
+    >>> dict_impl.__delitem__(od, 'bam')
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+
+Check whether double linked list contains inexistent key::
+
+    >>> dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'inexistent'])
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+    Traceback (most recent call last):
+      ...
+    ConsistencyError: Double linked list contains a reference to a non 
+    existing dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
+
+Manually sanitize odict::
+
+    >>> dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'bar'])
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+
+Check broken list head::
+
+    >>> od.lh = 'inexistent'
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+    Traceback (most recent call last):
+      ...
+    ConsistencyError: List head contains a reference to a non existing dict 
+    entry: 'inexistent' not in ['bar', 'baz', 'foo']
+
+Manually sanitize odict::
+
+    >>> od.lh = 'foo'
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+
+Check broken list tail::
+
+    >>> od.lt = 'inexistent'
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+    Traceback (most recent call last):
+      ...
+    ConsistencyError: List tail contains a reference to a non existing dict 
+    entry: 'inexistent' not in ['bar', 'baz', 'foo']
+
+Manually sanitize odict::
+
+    >>> od.lt = 'baz'
+    >>> check_odict_consistency(od, ignore_key=ignore_key)
+
 Cleanup test environment::
 
     >>> connection.close()

@@ -73,3 +73,50 @@ def volatile_property(func):
         return getattr(self, attribute_name)
     wrapper.__doc__ = func.__doc__
     return property(wrapper)
+
+
+##############################################################################
+# maintenance utilities
+##############################################################################
+
+class ConsistencyError(Exception):
+    """Exception used if odict data structure is damaged.
+    """
+
+
+def check_odict_consistency(od, ignore_key=None):
+    """Check consistency of odict.
+
+    If ignore_key is given, it gets called for all keys from original dict
+    implementation and expect True for it if specific keys should be ignored.
+    """
+    dict_impl = od._dict_impl()
+    orgin_keys = dict_impl.keys(od)
+    if ignore_key is not None:
+        orgin_keys = [_ for _ in orgin_keys if not ignore_key(_)]
+    try:
+        od[od.lh]
+    except KeyError, e:
+        message = u'List head contains a reference to a non ' +\
+                  u'existing dict entry: %s not in %s'
+        message = message % (str(e), str(orgin_keys))
+        raise ConsistencyError(message)
+    try:
+        od[od.lt]
+    except KeyError, e:
+        message = u'List tail contains a reference to a non ' +\
+                  u'existing dict entry: %s not in %s'
+        message = message % (str(e), str(orgin_keys))
+        raise ConsistencyError(message)
+    try:
+        od_keys = od.keys()
+    except KeyError, e:
+        message = u'Double linked list contains a reference to a non ' +\
+                  u'existing dict entry: %s not in %s'
+        message = message % (str(e), str(orgin_keys))
+        raise ConsistencyError(message)
+    if len(orgin_keys) != len(od_keys):
+        message = u'Given odict based implementation double linked list ' +\
+                  u'structure broken. Key count does not match: %s != %s'
+        message = message % (len(orgin_keys), len(od_keys))
+        raise ConsistencyError(message)
