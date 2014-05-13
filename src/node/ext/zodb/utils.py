@@ -80,8 +80,60 @@ def volatile_property(func):
 ##############################################################################
 
 class ConsistencyError(Exception):
-    """Exception used if odict data structure is damaged.
+    """Base exception for odict data structure inconsistencies.
     """
+
+
+class ListHeadInconsistency(ConsistencyError):
+    """Thrown if list head references non existing dict entry.
+    """
+
+    def __init__(self, error, orgin_keys):
+        self.missing = str(error)
+        self.orgin_keys = orgin_keys
+        message = u'List head contains a reference to a non existing dict ' +\
+                  u'entry: %s not in %s'
+        message = message % (str(error), str(orgin_keys))
+        super(ListHeadInconsistency, self).__init__(message)
+
+
+class ListTailInconsistency(ConsistencyError):
+    """Thrown if list tail references non existing dict entry.
+    """
+
+    def __init__(self, error, orgin_keys):
+        self.missing = str(error)
+        self.orgin_keys = orgin_keys
+        message = u'List tail contains a reference to a non existing dict ' +\
+                  u'entry: %s not in %s'
+        message = message % (str(error), str(orgin_keys))
+        super(ListTailInconsistency, self).__init__(message)
+
+
+class ListReferenceInconsistency(ConsistencyError):
+    """Thrown if double linked list pointer references non existing dict entry.
+    """
+
+    def __init__(self, error, orgin_keys):
+        self.missing = str(error)
+        self.orgin_keys = orgin_keys
+        message = u'Double linked list contains a reference to a non ' +\
+                  u'existing dict entry: %s not in %s'
+        message = message % (str(error), str(orgin_keys))
+        super(ListReferenceInconsistency, self).__init__(message)
+
+
+class UnexpextedEndOfList(ConsistencyError):
+    """Thrown if unexpected ``_nil`` pointer found in double linked list.
+    """
+
+    def __init__(self, od_keys, orgin_keys):
+        self.od_keys = od_keys
+        self.orgin_keys = orgin_keys
+        message = u'Unexpected ``_nil`` pointer found in double linked ' +\
+                  u'list. Resulting key count does not match:  %s != %s'
+        message = message % (len(orgin_keys), len(od_keys))
+        super(UnexpextedEndOfList, self).__init__(message)
 
 
 def check_odict_consistency(od, ignore_key=None):
@@ -97,26 +149,14 @@ def check_odict_consistency(od, ignore_key=None):
     try:
         od[od.lh]
     except KeyError, e:
-        message = u'List head contains a reference to a non ' +\
-                  u'existing dict entry: %s not in %s'
-        message = message % (str(e), str(orgin_keys))
-        raise ConsistencyError(message)
+        raise ListHeadInconsistency(e, orgin_keys)
     try:
         od[od.lt]
     except KeyError, e:
-        message = u'List tail contains a reference to a non ' +\
-                  u'existing dict entry: %s not in %s'
-        message = message % (str(e), str(orgin_keys))
-        raise ConsistencyError(message)
+        raise ListTailInconsistency(e, orgin_keys)
     try:
         od_keys = od.keys()
     except KeyError, e:
-        message = u'Double linked list contains a reference to a non ' +\
-                  u'existing dict entry: %s not in %s'
-        message = message % (str(e), str(orgin_keys))
-        raise ConsistencyError(message)
+        raise ListReferenceInconsistency(e, orgin_keys)
     if len(orgin_keys) != len(od_keys):
-        message = u'Given odict based implementation double linked list ' +\
-                  u'structure broken. Key count does not match: %s != %s'
-        message = message % (len(orgin_keys), len(od_keys))
-        raise ConsistencyError(message)
+        raise UnexpextedEndOfList(od_keys, orgin_keys)

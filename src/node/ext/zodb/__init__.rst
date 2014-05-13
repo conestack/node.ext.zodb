@@ -738,8 +738,8 @@ Check if ``_nil`` marker set irregulary::
     >>> check_odict_consistency(od, ignore_key=ignore_key)
     Traceback (most recent call last):
       ...
-    ConsistencyError: Given odict based implementation double linked list 
-    structure broken. Key count does not match: 4 != 3
+    UnexpextedEndOfList: Unexpected ``_nil`` pointer found in double linked 
+    list. Resulting key count does not match:  4 != 3
 
 Manually sanitize odict::
 
@@ -752,8 +752,8 @@ Check whether double linked list contains inexistent key::
     >>> check_odict_consistency(od, ignore_key=ignore_key)
     Traceback (most recent call last):
       ...
-    ConsistencyError: Double linked list contains a reference to a non 
-    existing dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
+    ListReferenceInconsistency: Double linked list contains a reference 
+    to a non existing dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
 
 Manually sanitize odict::
 
@@ -766,8 +766,8 @@ Check broken list head::
     >>> check_odict_consistency(od, ignore_key=ignore_key)
     Traceback (most recent call last):
       ...
-    ConsistencyError: List head contains a reference to a non existing dict 
-    entry: 'inexistent' not in ['bar', 'baz', 'foo']
+    ListHeadInconsistency: List head contains a reference to a non existing 
+    dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
 
 Manually sanitize odict::
 
@@ -780,8 +780,8 @@ Check broken list tail::
     >>> check_odict_consistency(od, ignore_key=ignore_key)
     Traceback (most recent call last):
       ...
-    ConsistencyError: List tail contains a reference to a non existing dict 
-    entry: 'inexistent' not in ['bar', 'baz', 'foo']
+    ListTailInconsistency: List tail contains a reference to a non existing 
+    dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
 
 Manually sanitize odict::
 
