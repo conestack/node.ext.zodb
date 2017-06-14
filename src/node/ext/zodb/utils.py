@@ -1,9 +1,7 @@
-from odict.pyodict import (
-    _odict,
-    _nil,
-)
-from persistent.dict import PersistentDict
 from BTrees.OOBTree import OOBTree
+from odict.pyodict import _nil
+from odict.pyodict import _odict
+from persistent.dict import PersistentDict
 
 
 class Podict(_odict, PersistentDict):
@@ -54,23 +52,20 @@ class OOBTodict(_odict, OOBTree):
         else:
             _odict.__setitem__(self, key, val)
 
-    def __repr__(self):
-        if self:
-            pairs = ("(%r, %r)" % (k, v) for k, v in self.iteritems())
-            return "OOBTodict([%s])" % ", ".join(pairs)
-        else:
-            return "OOBTodict()"
-
 
 def volatile_property(func):
     """Like ``node.utils.instance_property``, but sets instance attribute
     with '_v_' prefix.
     """
     def wrapper(self):
-        attribute_name = '_v_%s' % func.__name__
-        if not hasattr(self, attribute_name):
+        attribute_name = '_v_{}'.format(func.__name__)
+        # do not use hasattr/getattr to avoid problems when overwriting
+        # __getattr__ on a class which also uses volatile_property
+        try:
+            return object.__getattribute__(self, attribute_name)
+        except AttributeError:
             setattr(self, attribute_name, func(self))
-        return getattr(self, attribute_name)
+            return object.__getattribute__(self, attribute_name)
     wrapper.__doc__ = func.__doc__
     return property(wrapper)
 
@@ -91,9 +86,11 @@ class ListHeadInconsistency(ConsistencyError):
     def __init__(self, error, orgin_keys):
         self.missing = str(error)
         self.orgin_keys = orgin_keys
-        message = u'List head contains a reference to a non existing dict ' +\
-                  u'entry: %s not in %s'
-        message = message % (str(error), str(orgin_keys))
+        message = (
+            u'List head contains a reference to a non existing dict '
+            u'entry: {} not in {}'
+        )
+        message = message.format(str(error), str(orgin_keys))
         super(ListHeadInconsistency, self).__init__(message)
 
 
@@ -104,9 +101,11 @@ class ListTailInconsistency(ConsistencyError):
     def __init__(self, error, orgin_keys):
         self.missing = str(error)
         self.orgin_keys = orgin_keys
-        message = u'List tail contains a reference to a non existing dict ' +\
-                  u'entry: %s not in %s'
-        message = message % (str(error), str(orgin_keys))
+        message = (
+            u'List tail contains a reference to a non existing dict '
+            u'entry: {} not in {}'
+        )
+        message = message.format(str(error), str(orgin_keys))
         super(ListTailInconsistency, self).__init__(message)
 
 
@@ -117,9 +116,11 @@ class ListReferenceInconsistency(ConsistencyError):
     def __init__(self, error, orgin_keys):
         self.missing = str(error)
         self.orgin_keys = orgin_keys
-        message = u'Double linked list contains a reference to a non ' +\
-                  u'existing dict entry: %s not in %s'
-        message = message % (str(error), str(orgin_keys))
+        message = (
+            u'Double linked list contains a reference to a non '
+            u'existing dict entry: {} not in {}'
+        )
+        message = message.format(str(error), str(orgin_keys))
         super(ListReferenceInconsistency, self).__init__(message)
 
 
@@ -130,9 +131,11 @@ class UnexpextedEndOfList(ConsistencyError):
     def __init__(self, od_keys, orgin_keys):
         self.od_keys = od_keys
         self.orgin_keys = orgin_keys
-        message = u'Unexpected ``_nil`` pointer found in double linked ' +\
-                  u'list. Resulting key count does not match:  %s != %s'
-        message = message % (len(orgin_keys), len(od_keys))
+        message = (
+            u'Unexpected ``_nil`` pointer found in double linked '
+            u'list. Resulting key count does not match:  {} != {}'
+        )
+        message = message.format(len(orgin_keys), len(od_keys))
         super(UnexpextedEndOfList, self).__init__(message)
 
 

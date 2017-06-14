@@ -8,6 +8,8 @@
 /.project
 /.DS_Store
 /.mr.developer.cfg
+/.settings/
+/pip-selfcheck.json
 /env/
 /parts/
 /bin/
@@ -21,3 +23,6 @@
 /docs/make.bat
 /dist/
 /coverage/
+/include/
+/lib/
+/local/
