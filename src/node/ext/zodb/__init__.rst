@@ -465,8 +465,14 @@ Fill root with some ZODBNodes and check memory usage:
     >>> transaction.commit()
 
     >>> new_size = storage.getSize()
-    >>> (new_size - old_size) / 1000
-    145
+
+ZODB 3 and ZODB 5 return different sizes so check whether lower or equal higher
+value:
+
+.. code-block:: pycon
+
+    >>> (new_size - old_size) / 1000 <= 145
+    True
 
 
 OOBTNode
@@ -807,8 +813,14 @@ Fill root with some OOBTNodes and check memory usage:
     >>> transaction.commit()
 
     >>> new_size = storage.getSize()
-    >>> (new_size - old_size) / 1000
-    139
+
+ZODB 3 and ZODB 5 return different sizes so check whether lower or equal higher
+value:
+
+.. code-block:: pycon
+
+    >>> (new_size - old_size) / 1000 <= 139
+    True
 
 
 Utils
