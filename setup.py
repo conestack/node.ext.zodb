@@ -1,43 +1,57 @@
-from setuptools import setup, find_packages
-import sys, os
+from setuptools import setup
+from setuptools import find_packages
+import codecs
+import os
+
+
+def read_file(name):
+    with codecs.open(
+        os.path.join(os.path.dirname(__file__), name),
+        encoding='utf-8'
+    ) as f:
+        return f.read()
+
 
 version = '1.0.1'
 shortdesc = 'Node Implementation with ZODB persistence'
-longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
-longdesc += open(os.path.join(os.path.dirname(__file__), 'CHANGES.rst')).read()
-longdesc += open(os.path.join(os.path.dirname(__file__), 'LICENSE.rst')).read()
+longdesc = '\n\n'.join([read_file(name) for name in [
+    'README.rst',
+    'CHANGES.rst',
+    'LICENSE.rst'
+]])
 
-setup(name='node.ext.zodb',
-      version=version,
-      description=shortdesc,
-      long_description=longdesc,
-      classifiers=[
-            'Operating System :: OS Independent',
-            'Programming Language :: Python', 
-            'Topic :: Utilities',
-            'License :: OSI Approved :: BSD License',
-      ],
-      keywords='node odict zodb persistent tree',
-      author='BlueDynamics Alliance',
-      author_email='dev@bluedynamics.com',
-      url=u'',
-      license='BSD',
-      packages=find_packages('src'),
-      package_dir = {'': 'src'},
-      namespace_packages=['node', 'node.ext'],
-      include_package_data=True,
-      zip_safe=False,
-      install_requires=[
-          'setuptools',
-          'node',
-          'ZODB3',
-      ],
-      extras_require = dict(
-          test=[
-                'interlude',
-          ]
-      ),
-      tests_require=['interlude'],
-      test_suite="node.ext.zodb.tests.test_suite"
+
+setup(
+    name='node.ext.zodb',
+    version=version,
+    description=shortdesc,
+    long_description=longdesc,
+    classifiers=[
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7'
+    ],
+    keywords='node odict zodb persistent tree',
+    author='BlueDynamics Alliance',
+    author_email='dev@bluedynamics.com',
+    url='',
+    license='BSD',
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
+    namespace_packages=['node', 'node.ext'],
+    include_package_data=True,
+    zip_safe=False,
+    install_requires=[
+        'setuptools',
+        'node',
+        'ZODB'
+    ],
+    extras_require=dict(
+        test=['interlude'],
+        zodb3=['ZODB3'],
+        zodb5=['ZODB']
+    ),
+    tests_require=['interlude'],
+    test_suite="node.ext.zodb.tests.test_suite"
 )
-

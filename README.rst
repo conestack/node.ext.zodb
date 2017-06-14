@@ -19,6 +19,6 @@ Travis-CI test state:
 Contributors
 ============
 
-- Robert Niederreiter <rnix [at] squarewave [dot] at>
+- Robert Niederreiter
 
-- Jens Klein <jk [at] kleinundparter [dot] at>
+- Jens Klein
