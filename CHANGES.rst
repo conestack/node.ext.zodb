@@ -2,8 +2,8 @@
 History
 =======
 
-1.1 (unreleased)
-----------------
+1.1
+---
 
 - Remove superfluous ``__repr__`` function from ``OOBTodict``. ``odict``
   package properly outputs class name as of version 1.6.2.
