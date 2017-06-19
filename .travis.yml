@@ -6,6 +6,6 @@ before_install:
   - virtualenv .
   - bin/pip install --upgrade pip setuptools zc.buildout
 install:
-  - ./bin/buildout -N -t 3 -c zodb5.cfg
+  - ./bin/buildout -N -t 3 -c zodb3.cfg
 script:
   - ./bin/test
