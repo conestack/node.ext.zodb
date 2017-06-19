@@ -12,7 +12,7 @@ def read_file(name):
         return f.read()
 
 
-version = '1.2.dev0'
+version = '1.1.1'
 shortdesc = 'Node Implementation with ZODB persistence'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
@@ -45,12 +45,10 @@ setup(
     install_requires=[
         'setuptools',
         'node',
-        'ZODB'
+        'ZODB3'
     ],
     extras_require=dict(
-        test=['interlude'],
-        zodb3=['ZODB3'],
-        zodb5=['ZODB']
+        test=['interlude']
     ),
     tests_require=['interlude'],
     test_suite="node.ext.zodb.tests.test_suite"

@@ -2,10 +2,12 @@
 History
 =======
 
-1.2 (unreleased)
-----------------
+1.1.1
+-----
 
-- No changes yet.
+- Change ``ZODB`` install requirement to ``ZODB3``. Latter one is a meta
+  package as of version 3.11.0 and installs ``ZODB``
+  [rnix, 2017-06-19]
 
 
 1.1
