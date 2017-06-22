@@ -47,9 +47,10 @@ setup(
         'node',
         'ZODB3'
     ],
-    extras_require=dict(
-        test=['interlude']
-    ),
-    tests_require=['interlude'],
-    test_suite="node.ext.zodb.tests.test_suite"
+    # extras_require=dict(
+    #     test=['interlude']
+    # ),
+    # tests_require=['interlude'],
+    # test_suite="node.ext.zodb.tests.test_suite"
+    test_suite='odict.tests'
 )
