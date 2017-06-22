@@ -2,10 +2,12 @@
 History
 =======
 
-1.2 (unreleased)
-----------------
+1.1.2 (unreleased)
+------------------
 
-- No changes yet.
+- Use ``@property`` and ``@property.setter`` for ``OOBTodict.lh`` and
+  ``OOBTodict.lt``.
+  [rnix, 2017-06-22]
 
 
 1.1.1

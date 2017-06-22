@@ -15,29 +15,29 @@ class OOBTodict(_odict, OOBTree):
     def _dict_impl(self):
         return OOBTree
 
-    def _get_lh(self):
+    @property
+    def lh(self):
         try:
             return self['____lh']
         except KeyError:
             self['____lh'] = _nil
         return self['____lh']
 
-    def _set_lh(self, val):
+    @lh.setter
+    def lh(self, val):
         self['____lh'] = val
 
-    lh = property(_get_lh, _set_lh)
-
-    def _get_lt(self):
+    @property
+    def lt(self):
         try:
             return self['____lt']
         except KeyError:
             self['____lt'] = _nil
         return self['____lt']
 
-    def _set_lt(self, val):
+    @lt.setter
+    def lt(self, val):
         self['____lt'] = val
-
-    lt = property(_get_lt, _set_lt)
 
     def __getitem__(self, key):
         if key.startswith('____'):
