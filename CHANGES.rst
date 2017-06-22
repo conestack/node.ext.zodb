@@ -5,6 +5,14 @@ History
 1.1.2 (unreleased)
 ------------------
 
+- Add ``keys`` to ``OOBTodict`` and accept any number of ``*args`` and ``**kw``
+  to match expected contract by ``OOBTree`` and Fix tests with ZODB 5.
+  [rnix, 2017-06-22]
+
+- Add ``__nonzero__`` and ``__bool__`` to ``OOBTodict`` in order to make it
+  work properly with ZODB 5.
+  [rnix, 2017-06-22]
+
 - Use ``@property`` and ``@property.setter`` for ``OOBTodict.lh`` and
   ``OOBTodict.lt``.
   [rnix, 2017-06-22]

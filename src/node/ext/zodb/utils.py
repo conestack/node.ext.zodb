@@ -39,6 +39,11 @@ class OOBTodict(_odict, OOBTree):
     def lt(self, val):
         self['____lt'] = val
 
+    def keys(self, *args, **kw):
+        # accept any number of arguments and kw arguments to ensure matching
+        # signature of OOBTree.keys() as of ZODB 5
+        return list(self.__iter__())
+
     def __getitem__(self, key):
         if key.startswith('____'):
             return self._dict_impl().__getitem__(self, key)
@@ -51,6 +56,13 @@ class OOBTodict(_odict, OOBTree):
             self._dict_impl().__setitem__(self, key, val)
         else:
             _odict.__setitem__(self, key, val)
+
+    def __nonzero__(self):
+        for _ in self._dict_impl().__iter__(self):
+            return True
+        return False
+
+    __bool__ = __nonzero__
 
 
 def volatile_property(func):

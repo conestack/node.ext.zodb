@@ -63,21 +63,44 @@ Delete OOBTree:
 OOBTodict
 =========
 
-Test OOBTodict:
-
-.. code-block:: pycon
-
-    >>> from node.ext.zodb import OOBTodict
-    >>> od = root['oobtodict'] = OOBTodict()
-    >>> od
-    OOBTodict()
-
 Class bases:
 
 .. code-block:: pycon
 
-    >>> od.__class__.__bases__
-    (<class 'odict.pyodict._odict'>, <type 'BTrees.OOBTree.OOBTree'>)
+    >>> from node.ext.zodb import OOBTodict
+    >>> from odict.pyodict import _odict
+
+    >>> od = OOBTodict()
+    >>> od.__class__.__bases__ == (_odict, OOBTree)
+    True
+
+List tail and list head:
+
+.. code-block:: pycon
+
+    >>> od = OOBTodict()
+    >>> od._dict_impl().__getitem__(od, '____lt')
+    nil
+
+    >>> od._dict_impl().__getitem__(od, '____lt')
+    nil
+
+    >>> od.lt
+    nil
+
+    >>> od.lh
+    nil
+
+    >>> sorted(od._dict_impl().keys(od))
+    ['____lh', '____lt']
+
+Add OOBTodict to root:
+
+.. code-block:: pycon
+
+    >>> od = root['oobtodict'] = OOBTodict()
+    >>> od
+    OOBTodict()
 
 Add some children:
 
@@ -93,22 +116,16 @@ Internal data representation:
 
 .. code-block:: pycon
 
-    >>> od._dict_impl()
-    <type 'BTrees.OOBTree.OOBTree'>
+    >>> od._dict_impl() is OOBTree
+    True
 
-    >>> data = list(od._dict_impl().items(od))
-    >>> data = sorted(data, key=lambda x: x[0])
-    >>> data
-    [('____lh', 'foo'), 
-    ('____lt', 'baz'), 
-    ('bar', ['foo', OOBTodict(), 'baz']), 
-    ('baz', ['bar', OOBTodict(), nil]), 
-    ('foo', [nil, OOBTodict(), 'bar'])]
+    >>> sorted(od._dict_impl().keys(od))
+    ['____lh', '____lt', 'bar', 'baz', 'foo']
 
-    >>> od.lt
+    >>> od._dict_impl().__getitem__(od, '____lt')
     'baz'
 
-    >>> od.lh
+    >>> od._dict_impl().__getitem__(od, '____lh')
     'foo'
 
     >>> od._dict_impl().__getitem__(od, 'foo')
@@ -119,6 +136,16 @@ Internal data representation:
 
     >>> od._dict_impl().__getitem__(od, 'baz')
     ['bar', OOBTodict(), nil]
+
+List tail and list head:
+
+.. code-block:: pycon
+
+    >>> od.lt
+    'baz'
+
+    >>> od.lh
+    'foo'
 
 Check keys:
 
@@ -268,25 +295,26 @@ Reopen database connection and check structure:
     ['oobtodict']
 
     >>> od = root['oobtodict']
-    >>> data = list(od._dict_impl().items(od))
-    >>> data = sorted(data, key=lambda x: x[0])
-    >>> data
-    [('____lh', 'foo'), 
-    ('____lt', 'bar'), 
-    ('bar', ['foo', OOBTodict(), nil]), 
-    ('foo', [nil, OOBTodict(), 'bar'])]
+    >>> sorted(od._dict_impl().keys(od))
+    ['____lh', '____lt', 'bar', 'foo']
 
-    >>> od.lt
-    'bar'
-
-    >>> od.lh
+    >>> od._dict_impl().__getitem__(od, '____lh')
     'foo'
+
+    >>> od._dict_impl().__getitem__(od, '____lt')
+    'bar'
 
     >>> od._dict_impl().__getitem__(od, 'foo')
     [nil, OOBTodict(), 'bar']
 
     >>> od._dict_impl().__getitem__(od, 'bar')
     ['foo', OOBTodict(), nil]
+
+    >>> od.lt
+    'bar'
+
+    >>> od.lh
+    'foo'
 
 Add attributes and reopen database connection and check structure:
 
@@ -303,17 +331,36 @@ Add attributes and reopen database connection and check structure:
     >>> connection = db.open()
     >>> root = connection.root()
     >>> od = root['oobtodict']
-    >>> data = list(od._dict_impl().items(od))
-    >>> data = sorted(data, key=lambda x: x[0])
-    >>> data
-    [('____lh', 'foo'), ('____lt', 'bam'), 
-    ('bam', ['baz', OOBTodict(), nil]), 
-    ('bar', ['foo', OOBTodict(), 'baz']), 
-    ('baz', ['bar', OOBTodict(), 'bam']), 
-    ('foo', [nil, OOBTodict(), 'bar'])]
+
+    >>> sorted(od._dict_impl().keys(od))
+    ['____lh', '____lt', 'bam', 'bar', 'baz', 'foo']
+
+    >>> od._dict_impl().__getitem__(od, '____lh')
+    'foo'
+
+    >>> od._dict_impl().__getitem__(od, '____lt')
+    'bam'
+
+    >>> od._dict_impl().__getitem__(od, 'bam')
+    ['baz', OOBTodict(), nil]
+
+    >>> od._dict_impl().__getitem__(od, 'bar')
+    ['foo', OOBTodict(), 'baz']
+
+    >>> od._dict_impl().__getitem__(od, 'baz')
+    ['bar', OOBTodict(), 'bam']
+
+    >>> od._dict_impl().__getitem__(od, 'foo')
+    [nil, OOBTodict(), 'bar']
 
     >>> od.keys()
     ['foo', 'bar', 'baz', 'bam']
+
+    >>> od.lt
+    'bam'
+
+    >>> od.lh
+    'foo'
 
 Add and delete attributes and reopen database connection and check structure:
 
@@ -331,20 +378,38 @@ Add and delete attributes and reopen database connection and check structure:
     >>> connection = db.open()
     >>> root = connection.root()
     >>> od = root['oobtodict']
-    >>> data = list(od._dict_impl().items(od))
-    >>> data = sorted(data, key=lambda x: x[0])
-
     >>> od.keys()
     ['foo', 'baz', 'bam', 'cow', 'chick']
 
-    >>> data
-    [('____lh', 'foo'), 
-    ('____lt', 'chick'), 
-    ('bam', ['baz', OOBTodict(), 'cow']), 
-    ('baz', ['foo', OOBTodict(), 'bam']), 
-    ('chick', ['cow', OOBTodict(), nil]), 
-    ('cow', ['bam', OOBTodict(), 'chick']), 
-    ('foo', [nil, OOBTodict(), 'baz'])]
+    >>> sorted(od._dict_impl().keys(od))
+    ['____lh', '____lt', 'bam', 'baz', 'chick', 'cow', 'foo']
+
+    >>> od._dict_impl().__getitem__(od, '____lh')
+    'foo'
+
+    >>> od._dict_impl().__getitem__(od, '____lt')
+    'chick'
+
+    >>> od._dict_impl().__getitem__(od, 'bam')
+    ['baz', OOBTodict(), 'cow']
+
+    >>> od._dict_impl().__getitem__(od, 'baz')
+    ['foo', OOBTodict(), 'bam']
+
+    >>> od._dict_impl().__getitem__(od, 'chick')
+    ['cow', OOBTodict(), nil]
+
+    >>> od._dict_impl().__getitem__(od, 'cow')
+    ['bam', OOBTodict(), 'chick']
+
+    >>> od._dict_impl().__getitem__(od, 'foo')
+    [nil, OOBTodict(), 'baz']
+
+    >>> od.lh
+    'foo'
+
+    >>> od.lt
+    'chick'
 
 Delete from database:
 
@@ -639,23 +704,27 @@ Check internal datastructure of attrs:
 .. code-block:: pycon
 
     >>> storage = oobtnode.attrs.storage
-    >>> storage._dict_impl()
-    <type 'BTrees.OOBTree.OOBTree'>
+    >>> storage._dict_impl() == OOBTree
+    True
 
-    >>> keys = [_ for _ in storage._dict_impl().keys(storage)]
-    >>> sorted(keys)
+    >>> sorted(storage._dict_impl().keys(storage))
     ['____lh', '____lt', 'bar', 'foo']
 
 values ``foo`` and ``bar`` are list tail and list head values:
 
 .. code-block:: pycon
 
-    >>> values = [_ for _ in storage._dict_impl().values(storage)]
-    >>> sorted(values)
-    [[nil, 2, 'bar'], 
-    ['foo', <OOBTNode object 'bar' at ...>, nil], 
-    'bar', 
-    'foo']
+    >>> storage._dict_impl().__getitem__(storage, '____lh')
+    'foo'
+
+    >>> storage._dict_impl().__getitem__(storage, '____lt')
+    'bar'
+
+    >>> storage._dict_impl().__getitem__(storage, 'bar')
+    ['foo', <OOBTNode object 'bar' at ...>, nil]
+
+    >>> storage._dict_impl().__getitem__(storage, 'foo')
+    [nil, 2, 'bar']
 
     >>> storage.lt
     'bar'
@@ -679,13 +748,26 @@ Add attribute, reopen database connection and check again:
     >>> oobtnode = root['oobtnode']
 
     >>> storage = oobtnode.attrs.storage
-    >>> values = [_ for _ in storage._dict_impl().values(storage)]
-    >>> sorted(values)
-    [[nil, 2, 'bar'], 
-    ['bar', 'some added value', nil], 
-    ['foo', <OOBTNode object 'bar' at ...>, 'baz'], 
-    'baz', 
-    'foo']
+    >>> storage._dict_impl().__getitem__(storage, '____lh')
+    'foo'
+
+    >>> storage._dict_impl().__getitem__(storage, '____lt')
+    'baz'
+
+    >>> storage._dict_impl().__getitem__(storage, 'bar')
+    ['foo', <OOBTNode object 'bar' at ...>, 'baz']
+
+    >>> storage._dict_impl().__getitem__(storage, 'baz')
+    ['bar', 'some added value', nil]
+
+    >>> storage._dict_impl().__getitem__(storage, 'foo')
+    [nil, 2, 'bar']
+
+    >>> storage.lt
+    'baz'
+
+    >>> storage.lh
+    'foo'
 
 Test copy and detach:
 
