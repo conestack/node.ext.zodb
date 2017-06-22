@@ -19,7 +19,7 @@ class OOBTodict(_odict, OOBTree):
     def lh(self):
         try:
             return self['____lh']
-        except KeyError:
+        except KeyError:  # not thrown with ZODB 5
             self['____lh'] = _nil
         return self['____lh']
 
@@ -31,7 +31,7 @@ class OOBTodict(_odict, OOBTree):
     def lt(self):
         try:
             return self['____lt']
-        except KeyError:
+        except KeyError:  # not thrown with ZODB 5
             self['____lt'] = _nil
         return self['____lt']
 

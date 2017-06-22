@@ -79,16 +79,16 @@ List tail and list head:
 .. code-block:: pycon
 
     >>> od = OOBTodict()
-    >>> od._dict_impl().__getitem__(od, '____lt')
-    nil
-
-    >>> od._dict_impl().__getitem__(od, '____lt')
-    nil
-
     >>> od.lt
     nil
 
     >>> od.lh
+    nil
+
+    >>> od._dict_impl().__getitem__(od, '____lt')
+    nil
+
+    >>> od._dict_impl().__getitem__(od, '____lt')
     nil
 
     >>> sorted(od._dict_impl().keys(od))
