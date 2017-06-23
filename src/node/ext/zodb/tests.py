@@ -1,7 +1,11 @@
 from BTrees.OOBTree import OOBTree
 from ZODB.DB import DB
 from ZODB.FileStorage import FileStorage
+from node.ext.zodb import IZODBNode
 from node.ext.zodb import OOBTodict
+from node.ext.zodb import ZODBNode
+from node.ext.zodb import ZODBNodeAttributes
+from node.ext.zodb.utils import Podict
 from node.tests import NodeTestCase
 from odict.pyodict import _nil
 from odict.pyodict import _odict
@@ -24,8 +28,8 @@ class TestNodeExtZODB(NodeTestCase):
         shutil.rmtree(self.tempdir)
 
     def open(self):
-        storage = FileStorage(os.path.join(self.tempdir, 'Data.fs'))
-        self.db = DB(storage)
+        self.storage = FileStorage(os.path.join(self.tempdir, 'Data.fs'))
+        self.db = DB(self.storage)
         self.connection = self.db.open()
         return self.connection.root()
 
@@ -207,130 +211,62 @@ class TestNodeExtZODB(NodeTestCase):
         del root['oobtodict']
         self.close()
 
+    def test_ZODBNode(self):
+        # Based on PersistentDict as storage
+        zodbnode = ZODBNode('zodbnode')
+        # Interface check
+        self.assertTrue(IZODBNode.providedBy(zodbnode))
+        # Storage check
+        self.assertTrue(isinstance(zodbnode.storage, Podict))
+        self.assertTrue(isinstance(zodbnode._storage, Podict))
+        # Structure check
+        root = self.open()
+        root[zodbnode.__name__] = zodbnode
+        zodbnode['child'] = ZODBNode('child')
+        self.check_output("""\
+        {'zodbnode': <ZODBNode object 'zodbnode' at ...>}
+        """, repr(root))
+        self.assertEqual(zodbnode.keys(), ['child'])
+        self.assertEqual(zodbnode.values(), [zodbnode['child']])
+        self.assertEqual(zodbnode.treerepr(), (
+            '<class \'node.ext.zodb.ZODBNode\'>: zodbnode\n'
+            '  <class \'node.ext.zodb.ZODBNode\'>: child\n'
+        ))
+        self.assertEqual(root.keys(), ['zodbnode'])
+        # Reopen database connection and check again
+        self.close()
+        root = self.open()
+        self.assertEqual(root.keys(), ['zodbnode'])
+        zodbnode = root['zodbnode']
+        self.assertEqual(zodbnode.treerepr(), (
+            '<class \'node.ext.zodb.ZODBNode\'>: zodbnode\n'
+            '  <class \'node.ext.zodb.ZODBNode\'>: child\n'
+        ))
+        # Delete child node
+        del zodbnode['child']
+        self.assertEqual(zodbnode.treerepr(), (
+            '<class \'node.ext.zodb.ZODBNode\'>: zodbnode\n'
+        ))
+        # Check node attributes
+        self.assertTrue(isinstance(zodbnode.attrs, ZODBNodeAttributes))
+        self.assertEqual(zodbnode.attrs.name, '_attrs')
+        zodbnode.attrs['foo'] = 1
+        bar = zodbnode.attrs['bar'] = ZODBNode()
+        self.assertEqual(zodbnode.attrs.values(), [1, bar])
+        # Fill root with some ZODBNodes and check memory usage
+        transaction.commit()
+        old_size = self.storage.getSize()
+        root['largezodb'] = ZODBNode('largezodb')
+        for i in range(1000):
+            root['largezodb'][str(i)] = ZODBNode()
+        self.assertEqual(len(root['largezodb']), 1000)
+        transaction.commit()
+        new_size = self.storage.getSize()
+        # ZODB 3 and ZODB 5 return different sizes so check whether lower or
+        # equal higher value
+        self.assertTrue((new_size - old_size) / 1000 <= 145)
+
 """
-
-ZODBNode
-========
-
-Based on PersistentDict as storage:
-
-.. code-block:: pycon
-
-    >>> from node.ext.zodb import IZODBNode
-    >>> from node.ext.zodb import ZODBNode
-    >>> zodbnode = ZODBNode('zodbnode')
-    >>> zodbnode
-    <ZODBNode object 'zodbnode' at ...>
-
-Interface check:
-
-.. code-block:: pycon
-
-    >>> IZODBNode.providedBy(zodbnode)
-    True
-
-Storage check:
-
-.. code-block:: pycon
-
-    >>> zodbnode.storage
-    Podict()
-
-    >>> zodbnode._storage
-    Podict()
-
-Structure check:
-
-.. code-block:: pycon
-
-    >>> root[zodbnode.__name__] = zodbnode
-    >>> zodbnode['child'] = ZODBNode('child')
-    >>> root
-    {'zodbnode': <ZODBNode object 'zodbnode' at ...>}
-
-    >>> zodbnode.keys()
-    ['child']
-
-    >>> zodbnode.values()
-    [<ZODBNode object 'child' at ...>]
-
-    >>> zodbnode['child']
-    <ZODBNode object 'child' at ...>
-
-    >>> zodbnode.printtree()
-    <class 'node.ext.zodb.ZODBNode'>: zodbnode
-      <class 'node.ext.zodb.ZODBNode'>: child
-
-    >>> root.keys()
-    ['zodbnode']
-
-Reopen database connection and check again:
-
-.. code-block:: pycon
-
-    >>> transaction.commit()
-    >>> connection.close()
-    >>> db.close()
-    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
-    >>> db = DB(storage)
-    >>> connection = db.open()
-    >>> root = connection.root()
-    >>> root.keys()
-    ['zodbnode']
-
-    >>> root['zodbnode'].printtree()
-    <class 'node.ext.zodb.ZODBNode'>: zodbnode
-      <class 'node.ext.zodb.ZODBNode'>: child
-
-Delete child node:
-
-.. code-block:: pycon
-
-    >>> del root['zodbnode']['child']
-
-    >>> root['zodbnode'].printtree()
-    <class 'node.ext.zodb.ZODBNode'>: zodbnode
-
-Check node attributes:
-
-.. code-block:: pycon
-
-    >>> root['zodbnode'].attrs
-    <ZODBNodeAttributes object '_attrs' at ...>
-
-    >>> root['zodbnode'].attrs['foo'] = 1
-    >>> root['zodbnode'].attrs['bar'] = ZODBNode()
-    >>> root['zodbnode'].attrs.values()
-    [1, <ZODBNode object 'bar' at ...>]
-
-    >>> transaction.commit()
-
-Fill root with some ZODBNodes and check memory usage:
-
-.. code-block:: pycon
-
-    >>> old_size = storage.getSize()
-
-    >>> root['largezodb'] = ZODBNode('largezodb')
-    >>> for i in range(1000):
-    ...     root['largezodb'][str(i)] = ZODBNode()
-
-    >>> len(root['largezodb'])
-    1000
-
-    >>> transaction.commit()
-
-    >>> new_size = storage.getSize()
-
-ZODB 3 and ZODB 5 return different sizes so check whether lower or equal higher
-value:
-
-.. code-block:: pycon
-
-    >>> (new_size - old_size) / 1000 <= 145
-    True
-
-
 OOBTNode
 ========
 
