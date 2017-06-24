@@ -16,6 +16,12 @@ Travis-CI test state:
 .. image:: https://secure.travis-ci.org/bluedynamics/node.ext.zodb.png
 
 
+Python Versions
+===============
+
+- Python 2.7, 3.3+
+
+
 Contributors
 ============
 

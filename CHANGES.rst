@@ -5,6 +5,9 @@ History
 1.2 (unreleased)
 ----------------
 
+- Add python 3 support.
+  [rnix, 2017-06-24]
+
 - Add ``keys`` to ``OOBTodict`` and accept any number of ``*args`` and ``**kw``
   to match expected contract by ``OOBTree`` and Fix tests with ZODB 5.
   [rnix, 2017-06-22]

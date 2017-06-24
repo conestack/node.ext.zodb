@@ -28,9 +28,15 @@ setup(
     long_description=longdesc,
     classifiers=[
         'License :: OSI Approved :: BSD License',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7'
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6'
     ],
     keywords='node odict zodb persistent tree',
     author='BlueDynamics Alliance',

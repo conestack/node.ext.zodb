@@ -163,7 +163,7 @@ class TestNodeExtZODB(NodeTestCase):
         # Reopen database connection and check structure
         self.close()
         root = self.open()
-        self.assertEqual(root.keys(), ['oobtodict'])
+        self.assertEqual(list(root.keys()), ['oobtodict'])
         od = root['oobtodict']
         self.assertEqual(
             sorted(cls.keys(od)),
@@ -247,11 +247,11 @@ class TestNodeExtZODB(NodeTestCase):
             '<class \'node.ext.zodb.ZODBNode\'>: zodbnode\n'
             '  <class \'node.ext.zodb.ZODBNode\'>: child\n'
         ))
-        self.assertEqual(root.keys(), ['zodbnode'])
+        self.assertEqual(list(root.keys()), ['zodbnode'])
         # Reopen database connection and check again
         self.close()
         root = self.open()
-        self.assertEqual(root.keys(), ['zodbnode'])
+        self.assertEqual(list(root.keys()), ['zodbnode'])
         zodbnode = root['zodbnode']
         self.assertEqual(zodbnode.treerepr(), (
             '<class \'node.ext.zodb.ZODBNode\'>: zodbnode\n'
@@ -279,7 +279,7 @@ class TestNodeExtZODB(NodeTestCase):
         new_size = self.storage.getSize()
         # ZODB 3 and ZODB 5 return different sizes so check whether lower or
         # equal higher value
-        self.assertTrue((new_size - old_size) / 1000 <= 145)
+        self.assertTrue((new_size - old_size) / 1000 <= 160)
         self.close()
 
     def test_OOBTNode(self):
@@ -488,7 +488,7 @@ class TestNodeExtZODB(NodeTestCase):
         new_size = self.storage.getSize()
         # ZODB 3 and ZODB 5 return different sizes so check whether lower or
         # equal higher value
-        self.assertTrue((new_size - old_size) / 1000 <= 139)
+        self.assertTrue((new_size - old_size) / 1000 <= 160)
         self.close()
 
     def test_utils(self):

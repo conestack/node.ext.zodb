@@ -10,7 +10,7 @@ if [ -x "$(which python)" ]; then
     ./py2_zodb3/bin/pip install zope.lifecycleevent
     ./py2_zodb3/bin/pip install zope.component
     ./py2_zodb3/bin/pip install zope.deprecation
-    ./py2_zodb3/bin/pip install ZODB3=3.10.7
+    ./py2_zodb3/bin/pip install ZODB3==3.10.7
     ./py2_zodb3/bin/pip install https://github.com/bluedynamics/odict/archive/master.zip
     ./py2_zodb3/bin/pip install https://github.com/bluedynamics/plumber/archive/master.zip
     ./py2_zodb3/bin/pip install https://github.com/bluedynamics/node/archive/master.zip
@@ -25,7 +25,7 @@ if [ -x "$(which python)" ]; then
     ./py2_zodb5/bin/pip install zope.lifecycleevent
     ./py2_zodb5/bin/pip install zope.component
     ./py2_zodb5/bin/pip install zope.deprecation
-    ./py2_zodb5/bin/pip install ZODB3=3.11.0
+    ./py2_zodb5/bin/pip install ZODB3==3.11.0
     ./py2_zodb5/bin/pip install https://github.com/bluedynamics/odict/archive/master.zip
     ./py2_zodb5/bin/pip install https://github.com/bluedynamics/plumber/archive/master.zip
     ./py2_zodb5/bin/pip install https://github.com/bluedynamics/node/archive/master.zip
@@ -41,7 +41,7 @@ if [ -x "$(which python3)" ]; then
     ./py3_zodb5/bin/pip install zope.lifecycleevent
     ./py3_zodb5/bin/pip install zope.component
     ./py3_zodb5/bin/pip install zope.deprecation
-    ./py2_zodb5/bin/pip install ZODB3=3.11.0
+    ./py2_zodb5/bin/pip install ZODB3==3.11.0
     ./py3_zodb5/bin/pip install https://github.com/bluedynamics/odict/archive/master.zip
     ./py3_zodb5/bin/pip install https://github.com/bluedynamics/plumber/archive/master.zip
     ./py3_zodb5/bin/pip install https://github.com/bluedynamics/node/archive/master.zip

@@ -164,16 +164,16 @@ def check_odict_consistency(od, ignore_key=None):
     try:
         if od.lh != _nil:
             od[od.lh]
-    except KeyError, e:
+    except KeyError as e:
         raise ListHeadInconsistency(e, orgin_keys)
     try:
         if od.lt != _nil:
             od[od.lt]
-    except KeyError, e:
+    except KeyError as e:
         raise ListTailInconsistency(e, orgin_keys)
     try:
         od_keys = od.keys()
-    except KeyError, e:
+    except KeyError as e:
         raise ListReferenceInconsistency(e, orgin_keys)
     if len(orgin_keys) != len(od_keys):
         raise UnexpextedEndOfList(od_keys, orgin_keys)

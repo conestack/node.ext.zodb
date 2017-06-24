@@ -1,11 +1,22 @@
 language: python
 sudo: false
+
 python:
-  - 2.7
-before_install:
-  - virtualenv .
-  - bin/pip install --upgrade pip setuptools zc.buildout
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
 install:
-  - ./bin/buildout -N -t 3 -c zodb3.cfg
-script:
-  - ./bin/test
+  - pip install zope.interface
+  - pip install zope.lifecycleevent
+  - pip install zope.component
+  - pip install zope.deprecation
+  - pip install ZODB3==3.11.0
+  - pip install https://github.com/bluedynamics/odict/archive/master.zip
+  - pip install https://github.com/bluedynamics/plumber/archive/master.zip
+  - pip install https://github.com/bluedynamics/node/archive/master.zip
+  - python setup.py install
+
+script: python -m unittest node.ext.zodb.tests
