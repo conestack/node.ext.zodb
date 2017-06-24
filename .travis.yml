@@ -16,6 +16,6 @@ install:
   - pip install https://github.com/bluedynamics/odict/archive/master.zip
   - pip install https://github.com/bluedynamics/plumber/archive/master.zip
   - pip install https://github.com/bluedynamics/node/archive/master.zip
-  - python setup.py install
+  - pip install .
 
 script: python -m node.ext.zodb.tests
