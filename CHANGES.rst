@@ -2,8 +2,8 @@
 History
 =======
 
-1.1.2 (unreleased)
-------------------
+1.2 (unreleased)
+----------------
 
 - Add ``keys`` to ``OOBTodict`` and accept any number of ``*args`` and ``**kw``
   to match expected contract by ``OOBTree`` and Fix tests with ZODB 5.
