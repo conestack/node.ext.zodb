@@ -5,9 +5,16 @@ from node.ext.zodb import IZODBNode
 from node.ext.zodb import OOBTNode
 from node.ext.zodb import OOBTNodeAttributes
 from node.ext.zodb import OOBTodict
+from node.ext.zodb import Podict
 from node.ext.zodb import ZODBNode
 from node.ext.zodb import ZODBNodeAttributes
-from node.ext.zodb.utils import Podict
+from node.ext.zodb import volatile_property
+from node.ext.zodb.utils import ListHeadInconsistency
+from node.ext.zodb.utils import ListReferenceInconsistency
+from node.ext.zodb.utils import ListTailInconsistency
+from node.ext.zodb.utils import UnexpextedEndOfList
+from node.ext.zodb.utils import check_odict_consistency
+from node.ext.zodb.utils import reset_odict
 from node.tests import NodeTestCase
 from odict.pyodict import _nil
 from odict.pyodict import _odict
@@ -204,8 +211,14 @@ class TestNodeExtZODB(NodeTestCase):
         self.assertEqual(cls.__getitem__(od, '____lt'), 'chick')
         self.assertEqual(cls.__getitem__(od, 'bam'), ['baz', od['bam'], 'cow'])
         self.assertEqual(cls.__getitem__(od, 'baz'), ['foo', od['baz'], 'bam'])
-        self.assertEqual(cls.__getitem__(od, 'chick'), ['cow', od['chick'], _nil])
-        self.assertEqual(cls.__getitem__(od, 'cow'), ['bam', od['cow'], 'chick'])
+        self.assertEqual(
+            cls.__getitem__(od, 'chick'),
+            ['cow', od['chick'], _nil]
+        )
+        self.assertEqual(
+            cls.__getitem__(od, 'cow'),
+            ['bam', od['cow'], 'chick']
+        )
         self.assertEqual(cls.__getitem__(od, 'foo'), [_nil, od['foo'], 'baz'])
         self.assertEqual(od.lh, 'foo')
         self.assertEqual(od.lt, 'chick')
@@ -477,193 +490,119 @@ class TestNodeExtZODB(NodeTestCase):
         # equal higher value
         self.assertTrue((new_size - old_size) / 1000 <= 139)
         self.close()
-"""
-Utils
-=====
 
-Test ``volatile_property``:
+    def test_utils(self):
+        # Test ``volatile_property``
+        class PropTest(object):
+            @volatile_property
+            def foo(self):
+                return 'foo'
+        inst = PropTest()
+        self.assertTrue('foo' in dir(inst))
+        self.assertFalse('_v_foo' in dir(inst))
+        self.assertEqual(inst.foo, 'foo')
+        self.assertTrue('_v_foo' in dir(inst))
+        self.assertEqual(inst._v_foo, 'foo')
+        self.assertTrue(inst._v_foo is inst.foo)
+        # Check odict consistency
+        od = OOBTodict()
+        od['foo'] = 'foo'
+        od['bar'] = 'bar'
+        od['baz'] = 'baz'
+        # Ignore key callback for OOBTree odicts needs to ignore keys starting
+        # with four underscores since these entries define the object
+        # attributes
 
-.. code-block:: pycon
+        def ignore_key(key):
+            return key.startswith('____')
 
-    >>> from node.ext.zodb import volatile_property
-    >>> class PropTest(object):
-    ...     @volatile_property
-    ...     def foo(self):
-    ...         return 'foo'
-
-    >>> inst = PropTest()
-    >>> 'foo' in dir(inst)
-    True
-
-    >>> '_v_foo' in dir(inst)
-    False
-
-    >>> inst.foo
-    'foo'
-
-    >>> '_v_foo' in dir(inst)
-    True
-
-    >>> inst._v_foo
-    'foo'
-
-    >>> inst._v_foo is inst.foo
-    True
-
-Check odict consistency:
-
-.. code-block:: pycon
-
-    >>> from odict.pyodict import _nil
-    >>> from node.ext.zodb.utils import check_odict_consistency
-
-    >>> od = OOBTodict()
-    >>> od['foo'] = 'foo'
-    >>> od['bar'] = 'bar'
-    >>> od['baz'] = 'baz'
-
-Ignore key callback for OOBTree odicts needs to ignore keys starting with
-four underscores since these entries define the object attributes:
-
-.. code-block:: pycon
-
-    >>> ignore_key = lambda x: x.startswith('____')
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-
-Check if ``_nil`` marker set irregulary:
-
-.. code-block:: pycon
-
-    >>> dict_impl = od._dict_impl()
-    >>> dict_impl.__setitem__(od, 'bam', ['foo', 'bam', _nil])
-    >>> od.keys()
-    ['foo', 'bar', 'baz']
-
-    >>> sorted([_ for _ in dict_impl.keys(od)])
-    ['____lh', '____lt', 'bam', 'bar', 'baz', 'foo']
-
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-    Traceback (most recent call last):
-      ...
-    UnexpextedEndOfList: Unexpected ``_nil`` pointer found in double linked 
-    list. Resulting key count does not match:  4 != 3
-
-Manually sanitize odict:
-
-.. code-block:: pycon
-
-    >>> dict_impl.__delitem__(od, 'bam')
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-
-Check whether double linked list contains inexistent key:
-
-.. code-block:: pycon
-
-    >>> dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'inexistent'])
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-    Traceback (most recent call last):
-      ...
-    ListReferenceInconsistency: Double linked list contains a reference 
-    to a non existing dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
-
-Manually sanitize odict:
-
-.. code-block:: pycon
-
-    >>> dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'bar'])
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-
-Check broken list head:
-
-.. code-block:: pycon
-
-    >>> od.lh = 'inexistent'
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-    Traceback (most recent call last):
-      ...
-    ListHeadInconsistency: List head contains a reference to a non existing 
-    dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
-
-Manually sanitize odict:
-
-.. code-block:: pycon
-
-    >>> od.lh = 'foo'
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-
-Check broken list tail:
-
-.. code-block:: pycon
-
-    >>> od.lt = 'inexistent'
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-    Traceback (most recent call last):
-      ...
-    ListTailInconsistency: List tail contains a reference to a non existing 
-    dict entry: 'inexistent' not in ['bar', 'baz', 'foo']
-
-Manually sanitize odict:
-
-.. code-block:: pycon
-
-    >>> od.lt = 'baz'
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-
-Reset odict:
-
-.. code-block:: pycon
-
-    >>> od.lh = 'inexistent'
-    >>> od.lt = 'baz'
-    >>> dict_impl.__setitem__(od, 'foo', ['123', 'foo', 'bar'])
-    >>> dict_impl.__setitem__(od, '123', [_nil, 'foo', _nil])
-
-    >>> from node.ext.zodb.utils import reset_odict
-    >>> reset_odict(od, ignore_key=ignore_key)
-
-    >>> od.lh
-    '123'
-
-    >>> od.lt
-    'foo'
-
-    >>> od
-    OOBTodict([('123', 'foo'), ('bar', 'bar'), ('baz', 'baz'), ('foo', 'foo')])
-
-    >>> check_odict_consistency(od, ignore_key=ignore_key)
-"""
+        check_odict_consistency(od, ignore_key=ignore_key)
+        # Check if ``_nil`` marker set irregulary
+        dict_impl = od._dict_impl()
+        dict_impl.__setitem__(od, 'bam', ['foo', 'bam', _nil])
+        self.assertEqual(od.keys(), ['foo', 'bar', 'baz'])
+        self.assertEqual(
+            sorted(dict_impl.keys(od)),
+            ['____lh', '____lt', 'bam', 'bar', 'baz', 'foo']
+        )
+        err = self.expect_error(
+            UnexpextedEndOfList,
+            check_odict_consistency,
+            od,
+            ignore_key=ignore_key
+        )
+        expected = (
+            'Unexpected ``_nil`` pointer found in double linked '
+            'list. Resulting key count does not match:  4 != 3'
+        )
+        self.assertEqual(str(err), expected)
+        # Manually sanitize odict
+        dict_impl.__delitem__(od, 'bam')
+        check_odict_consistency(od, ignore_key=ignore_key)
+        # Check whether double linked list contains inexistent key
+        dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'inexistent'])
+        err = self.expect_error(
+            ListReferenceInconsistency,
+            check_odict_consistency,
+            od,
+            ignore_key=ignore_key
+        )
+        expected = (
+            'Double linked list contains a reference to a non existing dict '
+            'entry: \'inexistent\' not in [\'bar\', \'baz\', \'foo\']'
+        )
+        self.assertEqual(str(err), expected)
+        # Manually sanitize odict
+        dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'bar'])
+        check_odict_consistency(od, ignore_key=ignore_key)
+        # Check broken list head
+        od.lh = 'inexistent'
+        err = self.expect_error(
+            ListHeadInconsistency,
+            check_odict_consistency,
+            od,
+            ignore_key=ignore_key
+        )
+        expected = (
+            'List head contains a reference to a non existing dict entry: '
+            '\'inexistent\' not in [\'bar\', \'baz\', \'foo\']'
+        )
+        self.assertEqual(str(err), expected)
+        # Manually sanitize odict
+        od.lh = 'foo'
+        check_odict_consistency(od, ignore_key=ignore_key)
+        # Check broken list tail
+        od.lt = 'inexistent'
+        err = self.expect_error(
+            ListTailInconsistency,
+            check_odict_consistency,
+            od,
+            ignore_key=ignore_key
+        )
+        expected = (
+            'List tail contains a reference to a non existing dict entry: '
+            '\'inexistent\' not in [\'bar\', \'baz\', \'foo\']'
+        )
+        self.assertEqual(str(err), expected)
+        # Manually sanitize odict
+        od.lt = 'baz'
+        check_odict_consistency(od, ignore_key=ignore_key)
+        # Reset odict
+        od.lh = 'inexistent'
+        od.lt = 'baz'
+        dict_impl.__setitem__(od, 'foo', ['123', 'foo', 'bar'])
+        dict_impl.__setitem__(od, '123', [_nil, 'foo', _nil])
+        reset_odict(od, ignore_key=ignore_key)
+        self.assertEqual(od.lh, '123')
+        self.assertEqual(od.lt, 'foo')
+        self.check_output("""\
+        OOBTodict([('123', 'foo'),
+        ('bar', 'bar'),
+        ('baz', 'baz'),
+        ('foo', 'foo')])
+        """, repr(od))
+        check_odict_consistency(od, ignore_key=ignore_key)
 
 
 if __name__ == '__main__':
     unittest.main()                                          # pragma: no cover
-
-
-# from interlude import interact
-# from pprint import pprint
-# import doctest
-# import unittest
-#
-#
-# optionflags = doctest.NORMALIZE_WHITESPACE | \
-#               doctest.ELLIPSIS | \
-#               doctest.REPORT_ONLY_FIRST_FAILURE
-# 
-# 
-# TESTFILES = [
-#     '__init__.rst',
-# ]
-#
-#
-# def test_suite():
-#     return unittest.TestSuite([
-#         doctest.DocFileSuite(
-#             f,
-#             optionflags=optionflags,
-#             globs={'interact': interact,
-#                    'pprint': pprint},
-#         ) for f in TESTFILES
-#     ])
-#
-#
-# if __name__ == '__main__':
-#     unittest.main(defaultTest='test_suite')                 #pragma NO COVERAGE
