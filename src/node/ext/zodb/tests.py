@@ -2,6 +2,8 @@ from BTrees.OOBTree import OOBTree
 from ZODB.DB import DB
 from ZODB.FileStorage import FileStorage
 from node.ext.zodb import IZODBNode
+from node.ext.zodb import OOBTNode
+from node.ext.zodb import OOBTNodeAttributes
 from node.ext.zodb import OOBTodict
 from node.ext.zodb import ZODBNode
 from node.ext.zodb import ZODBNodeAttributes
@@ -265,373 +267,217 @@ class TestNodeExtZODB(NodeTestCase):
         # ZODB 3 and ZODB 5 return different sizes so check whether lower or
         # equal higher value
         self.assertTrue((new_size - old_size) / 1000 <= 145)
+        self.close()
 
+    def test_OOBTNode(self):
+        # Based on OOBTree as storage
+        oobtnode = OOBTNode('oobtnode')
+        # Interface check
+        self.assertTrue(IZODBNode.providedBy(oobtnode))
+        # Storage check
+        self.assertTrue(isinstance(oobtnode.storage, OOBTodict))
+        self.assertTrue(isinstance(oobtnode._storage, OOBTodict))
+        # Structure check
+        root = self.open()
+        root[oobtnode.__name__] = oobtnode
+        oobtnode['child'] = OOBTNode('child')
+        self.assertEqual(sorted(root.keys()), ['oobtnode'])
+        self.assertEqual(oobtnode.keys(), ['child'])
+        self.assertEqual(oobtnode.values(), [oobtnode['child']])
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: child\n'
+        ))
+        self.check_output("""\
+        OOBTodict([('child', <OOBTNode object 'child' at ...>)])
+        """, repr(oobtnode.storage))
+        # Reopen database connection and check again
+        self.close()
+        root = self.open()
+        self.assertEqual(sorted(root.keys()), ['oobtnode'])
+        oobtnode = root['oobtnode']
+        self.assertEqual(oobtnode.keys(), ['child'])
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: child\n'
+        ))
+        self.assertTrue(oobtnode['child'].__parent__ is oobtnode)
+        # Delete child node
+        del oobtnode['child']
+        transaction.commit()
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+        ))
+        # Check node attributes
+        self.assertTrue(isinstance(oobtnode.attrs, OOBTNodeAttributes))
+        self.assertEqual(oobtnode.attrs.name, '_attrs')
+        oobtnode.attrs['foo'] = 1
+        bar = oobtnode.attrs['bar'] = OOBTNode()
+        self.assertEqual(oobtnode.attrs.values(), [1, bar])
+        # Check attribute access for node attributes
+        oobtnode.attribute_access_for_attrs = True
+        self.assertEqual(oobtnode.attrs.foo, 1)
+        # Check whether flag has been persisted
+        self.close()
+        root = self.open()
+        oobtnode = root['oobtnode']
+        self.assertEqual(oobtnode.attrs.foo, 1)
+        self.assertEqual(oobtnode.attrs.bar, oobtnode.attrs['bar'])
+        oobtnode.attrs.foo = 2
+        self.assertEqual(oobtnode.attrs.foo, 2)
+        oobtnode.attribute_access_for_attrs = False
+        # Check attrs storage
+        self.check_output("""\
+        OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
+        """, repr(oobtnode.attrs.storage))
+        self.check_output("""\
+        OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
+        """, repr(oobtnode.attrs._storage))
+        self.assertTrue(oobtnode.attrs.storage is oobtnode.attrs._storage)
+        self.close()
+        root = self.open()
+        oobtnode = root['oobtnode']
+        oobtnode.attribute_access_for_attrs = False
+        self.check_output("""\
+        OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
+        """, repr(oobtnode.attrs.storage))
+        # Check internal datastructure of attrs
+        storage = oobtnode.attrs.storage
+        cls = storage._dict_impl()
+        self.assertTrue(cls is OOBTree)
+        self.assertEqual(
+            sorted(cls.keys(storage)),
+            ['____lh', '____lt', 'bar', 'foo']
+        )
+        # values ``foo`` and ``bar`` are list tail and list head values
+        self.assertEqual(cls.__getitem__(storage, '____lh'), 'foo')
+        self.assertEqual(cls.__getitem__(storage, '____lt'), 'bar')
+        attrs = oobtnode.attrs
+        self.assertEqual(
+            cls.__getitem__(storage, 'bar'),
+            ['foo', attrs['bar'], _nil]
+        )
+        self.assertEqual(
+            cls.__getitem__(storage, 'foo'),
+            [_nil, 2, 'bar']
+        )
+        self.assertEqual(storage.lt, 'bar')
+        self.assertEqual(storage.lh, 'foo')
+        # Add attribute, reopen database connection and check again
+        oobtnode.attrs['baz'] = 'some added value'
+        self.close()
+        root = self.open()
+        oobtnode = root['oobtnode']
+        storage = oobtnode.attrs.storage
+        cls = storage._dict_impl()
+        self.assertEqual(cls.__getitem__(storage, '____lh'), 'foo')
+        self.assertEqual(cls.__getitem__(storage, '____lt'), 'baz')
+        attrs = oobtnode.attrs
+        self.assertEqual(
+            cls.__getitem__(storage, 'bar'),
+            ['foo', attrs['bar'], 'baz']
+        )
+        self.assertEqual(
+            cls.__getitem__(storage, 'baz'),
+            ['bar', 'some added value', _nil]
+        )
+        self.assertEqual(
+            cls.__getitem__(storage, 'foo'),
+            [_nil, 2, 'bar']
+        )
+        self.assertEqual(storage.lt, 'baz')
+        self.assertEqual(storage.lh, 'foo')
+        # Test copy and detach
+        oobtnode['c1'] = OOBTNode()
+        oobtnode['c2'] = OOBTNode()
+        oobtnode['c3'] = OOBTNode()
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
+        ))
+        # Detach c1
+        c1 = oobtnode.detach('c1')
+        self.assertTrue(isinstance(c1, OOBTNode))
+        self.assertEqual(c1.name, 'c1')
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
+        ))
+        # Add c1 as child to c2
+        oobtnode['c2'][c1.name] = c1
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
+            '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
+        ))
+        # Reopen database connection and check again
+        self.close()
+        root = self.open()
+        oobtnode = root['oobtnode']
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
+            '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
+        ))
+        # Copy c1
+        c1_copy = oobtnode['c2']['c1'].copy()
+        self.assertFalse(c1_copy is oobtnode['c2']['c1'])
+        oobtnode['c1'] = c1_copy
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
+            '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+        ))
+        oobtnode['c4'] = oobtnode['c2'].copy()
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
+            '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c4\n'
+            '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+        ))
+        self.assertFalse(oobtnode['c2']['c1'] is oobtnode['c4']['c1'])
+        self.assertFalse(
+            oobtnode['c2']['c1'].attrs is oobtnode['c4']['c1'].attrs
+        )
+        transaction.commit()
+        # Swap nodes
+        oobtnode.swap(oobtnode['c1'], oobtnode['c3'])
+        oobtnode.swap(oobtnode['c1'], oobtnode['c2'])
+        self.assertEqual(oobtnode.treerepr(), (
+            '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
+            '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
+            '  <class \'node.ext.zodb.OOBTNode\'>: c4\n'
+            '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
+        ))
+        # Calling nodes does nothing, persisting is left to transaction
+        # mechanism
+        oobtnode()
+        # Fill root with some OOBTNodes and check memory usage
+        old_size = self.storage.getSize()
+        root['large'] = OOBTNode()
+        for i in range(1000):
+            root['large'][str(i)] = OOBTNode()
+        self.assertEqual(len(root['large']), 1000)
+        transaction.commit()
+        new_size = self.storage.getSize()
+        # ZODB 3 and ZODB 5 return different sizes so check whether lower or
+        # equal higher value
+        self.assertTrue((new_size - old_size) / 1000 <= 139)
+        self.close()
 """
-OOBTNode
-========
-
-Based on OOBTree as storage:
-
-.. code-block:: pycon
-
-    >>> from node.ext.zodb import OOBTNode
-    >>> oobtnode = OOBTNode('oobtnode')
-    >>> oobtnode
-    <OOBTNode object 'oobtnode' at ...>
-
-Interface check:
-
-.. code-block:: pycon
-
-    >>> IZODBNode.providedBy(oobtnode)
-    True
-
-Storage check:
-
-.. code-block:: pycon
-
-    >>> oobtnode.storage
-    OOBTodict()
-
-    >>> oobtnode._storage
-    OOBTodict()
-
-Structure check:
-
-.. code-block:: pycon
-
-    >>> root[oobtnode.__name__] = oobtnode
-    >>> oobtnode['child'] = OOBTNode('child')
-    >>> sorted(root.keys())
-    ['largezodb', 'oobtnode', 'zodbnode']
-
-    >>> oobtnode.keys()
-    ['child']
-
-    >>> oobtnode.values()
-    [<OOBTNode object 'child' at ...>]
-
-    >>> oobtnode['child']
-    <OOBTNode object 'child' at ...>
-
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: child
-
-    >>> oobtnode.storage
-    OOBTodict([('child', <OOBTNode object 'child' at ...>)])
-
-Reopen database connection and check again:
-
-.. code-block:: pycon
-
-    >>> transaction.commit()
-    >>> connection.close()
-    >>> db.close()
-    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
-    >>> db = DB(storage)
-    >>> connection = db.open()
-    >>> root = connection.root()
-    >>> sorted(root.keys())
-    ['largezodb', 'oobtnode', 'zodbnode']
-
-    >>> oobtnode = root['oobtnode']
-    >>> oobtnode.keys()
-    ['child']
-
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: child
-
-    >>> oobtnode['child'].__parent__
-    <OOBTNode object 'oobtnode' at ...>
-
-Delete child node:
-
-.. code-block:: pycon
-
-    >>> del oobtnode['child']
-    >>> transaction.commit()
-
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-
-Check node attributes:
-
-.. code-block:: pycon
-
-    >>> oobtnode.attrs
-    <OOBTNodeAttributes object '_attrs' at ...>
-
-    >>> oobtnode.attrs['foo'] = 1
-    >>> oobtnode.attrs['bar'] = OOBTNode()
-    >>> oobtnode.attrs.values()
-    [1, <OOBTNode object 'bar' at ...>]
-
-Check attribute access for node attributes:
-
-.. code-block:: pycon
-
-    >>> oobtnode.attribute_access_for_attrs = True
-    >>> oobtnode.attrs.foo
-    1
-
-Check whether flag has been persisted:
-
-.. code-block:: pycon
-
-    >>> transaction.commit()
-    >>> connection.close()
-    >>> db.close()
-    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
-    >>> db = DB(storage)
-    >>> connection = db.open()
-    >>> root = connection.root()
-
-    >>> oobtnode = root['oobtnode']
-    >>> oobtnode.attrs.foo
-    1
-
-    >>> oobtnode.attrs.bar
-    <OOBTNode object 'bar' at ...>
-
-    >>> oobtnode.attrs.foo = 2
-    >>> oobtnode.attrs.foo
-    2
-
-    >>> oobtnode.attribute_access_for_attrs = False
-
-Check attrs storage:
-
-.. code-block:: pycon
-
-    >>> oobtnode.attrs.storage
-    OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
-
-    >>> oobtnode.attrs._storage
-    OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
-
-    >>> oobtnode.attrs.storage is oobtnode.attrs._storage
-    True
-
-    >>> transaction.commit()
-    >>> connection.close()
-    >>> db.close()
-    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
-    >>> db = DB(storage)
-    >>> connection = db.open()
-    >>> root = connection.root()
-    >>> oobtnode = root['oobtnode']
-    >>> oobtnode.attribute_access_for_attrs = False
-    >>> oobtnode.attrs.storage
-    OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
-
-Check internal datastructure of attrs:
-
-.. code-block:: pycon
-
-    >>> storage = oobtnode.attrs.storage
-    >>> storage._dict_impl() == OOBTree
-    True
-
-    >>> sorted(storage._dict_impl().keys(storage))
-    ['____lh', '____lt', 'bar', 'foo']
-
-values ``foo`` and ``bar`` are list tail and list head values:
-
-.. code-block:: pycon
-
-    >>> storage._dict_impl().__getitem__(storage, '____lh')
-    'foo'
-
-    >>> storage._dict_impl().__getitem__(storage, '____lt')
-    'bar'
-
-    >>> storage._dict_impl().__getitem__(storage, 'bar')
-    ['foo', <OOBTNode object 'bar' at ...>, nil]
-
-    >>> storage._dict_impl().__getitem__(storage, 'foo')
-    [nil, 2, 'bar']
-
-    >>> storage.lt
-    'bar'
-
-    >>> storage.lh
-    'foo'
-
-Add attribute, reopen database connection and check again:
-
-.. code-block:: pycon
-
-    >>> oobtnode.attrs['baz'] = 'some added value'
-
-    >>> transaction.commit()
-    >>> connection.close()
-    >>> db.close()
-    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
-    >>> db = DB(storage)
-    >>> connection = db.open()
-    >>> root = connection.root()
-    >>> oobtnode = root['oobtnode']
-
-    >>> storage = oobtnode.attrs.storage
-    >>> storage._dict_impl().__getitem__(storage, '____lh')
-    'foo'
-
-    >>> storage._dict_impl().__getitem__(storage, '____lt')
-    'baz'
-
-    >>> storage._dict_impl().__getitem__(storage, 'bar')
-    ['foo', <OOBTNode object 'bar' at ...>, 'baz']
-
-    >>> storage._dict_impl().__getitem__(storage, 'baz')
-    ['bar', 'some added value', nil]
-
-    >>> storage._dict_impl().__getitem__(storage, 'foo')
-    [nil, 2, 'bar']
-
-    >>> storage.lt
-    'baz'
-
-    >>> storage.lh
-    'foo'
-
-Test copy and detach:
-
-.. code-block:: pycon
-
-    >>> oobtnode['c1'] = OOBTNode()
-    >>> oobtnode['c2'] = OOBTNode()
-    >>> oobtnode['c3'] = OOBTNode()
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c2
-      <class 'node.ext.zodb.OOBTNode'>: c3
-
-Detach c1:
-
-.. code-block:: pycon
-
-    >>> c1 = oobtnode.detach('c1')
-    >>> c1
-    <OOBTNode object 'c1' at ...>
-
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: c2
-      <class 'node.ext.zodb.OOBTNode'>: c3
-
-Add c1 as child to c2:
-
-.. code-block:: pycon
-
-    >>> oobtnode['c2'][c1.name] = c1
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: c2
-        <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c3
-
-Reopen database connection and check again:
-
-.. code-block:: pycon
-
-    >>> transaction.commit()
-    >>> connection.close()
-    >>> db.close()
-    >>> storage = FileStorage(os.path.join(tempdir, 'Data.fs'))
-    >>> db = DB(storage)
-    >>> connection = db.open()
-    >>> root = connection.root()
-    >>> oobtnode = root['oobtnode']
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: c2
-        <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c3
-
-Copy c1:
-
-.. code-block:: pycon
-
-    >>> c1_copy = oobtnode['c2']['c1'].copy()
-    >>> c1_copy is oobtnode['c2']['c1']
-    False
-
-    >>> oobtnode['c1'] = c1_copy
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: c2
-        <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c3
-      <class 'node.ext.zodb.OOBTNode'>: c1
-
-    >>> oobtnode['c4'] = oobtnode['c2'].copy()
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: c2
-        <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c3
-      <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c4
-        <class 'node.ext.zodb.OOBTNode'>: c1
-
-    >>> oobtnode['c2']['c1'] is oobtnode['c4']['c1']
-    False
-
-    >>> oobtnode['c2']['c1'].attrs is oobtnode['c4']['c1'].attrs
-    False
-
-    >>> transaction.commit()
-
-Swap nodes:
-
-.. code-block:: pycon
-
-    >>> oobtnode.swap(oobtnode['c1'], oobtnode['c3'])
-    >>> oobtnode.swap(oobtnode['c1'], oobtnode['c2'])
-    >>> oobtnode.printtree()
-    <class 'node.ext.zodb.OOBTNode'>: oobtnode
-      <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c2
-        <class 'node.ext.zodb.OOBTNode'>: c1
-      <class 'node.ext.zodb.OOBTNode'>: c3
-      <class 'node.ext.zodb.OOBTNode'>: c4
-        <class 'node.ext.zodb.OOBTNode'>: c1
-
-Calling nodes does nothing, persisting is left to transaction mechanism:
-
-.. code-block:: pycon
-
-    >>> oobtnode()
-
-Fill root with some OOBTNodes and check memory usage:
-
-.. code-block:: pycon
-
-    >>> old_size = storage.getSize()
-
-    >>> root['large'] = OOBTNode()
-    >>> for i in range(1000):
-    ...     root['large'][str(i)] = OOBTNode()
-
-    >>> len(root['large'])
-    1000
-
-    >>> transaction.commit()
-
-    >>> new_size = storage.getSize()
-
-ZODB 3 and ZODB 5 return different sizes so check whether lower or equal higher
-value:
-
-.. code-block:: pycon
-
-    >>> (new_size - old_size) / 1000 <= 139
-    True
-
-
 Utils
 =====
 
