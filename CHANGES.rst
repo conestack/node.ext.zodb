@@ -2,7 +2,7 @@
 History
 =======
 
-1.2 (unreleased)
+1.2 (2017-07-18)
 ----------------
 
 - Add python 3 support.
