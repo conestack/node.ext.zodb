@@ -7,7 +7,6 @@ from node.interfaces import INode
 from node.interfaces import IOrdered
 from node.utils import AttributeAccess
 from node.utils import instance_property
-from persistent import Persistent
 from plumber import Behavior
 from plumber import default
 from plumber import finalize
@@ -19,50 +18,41 @@ import copy
 
 @implementer(IZODBNode)
 class ZODBBehavior(Behavior):
-    """This part requires plumbed class to inherit from Persistent.
+    """This behavior requires plumbed class to inherit from ``Persistent``.
     """
 
-    @override
     @property
     def __parent__(self):
-        """Always expect _v_parent to be set, see __setattr__ and
-        __getitem__.
-        """
         return self._v_parent
 
     @override
-    def __getitem__(self, key):
-        v = self.storage[key]
-        if INode.providedBy(v):
-            v._v_parent = self
-        return v
-
-    @override
-    def __setattr__(self, name, value):
-        """If name is __parent__, write value to _v_parent. This avoids
-        _p_changed to be set set by Persitent.__setattr__. Using a read/write
-        property for __parent__ won't work.
-        """
-        if name == '__parent__':
-            name = '_v_parent'
-        Persistent.__setattr__(self, name, value)
+    @__parent__.setter
+    def __parent__(self, value):
+        self._v_parent = value
 
     @default
     def __call__(self):
-        """Meant to be plumbed if something should happen in a particular
-        subclass on __call__. Persisting is left to the ZODB transaction
+        """Supposed to be plumbed if something should happen in a particular
+        subclass on ``__call__``. Persisting is left to the ZODB transaction
         mechanism.
         """
         pass
+
+    @finalize
+    def copy(self):
+        return copy.deepcopy(self)
 
     @plumb
     def __setitem__(_next, self, key, value):
         _next(self, key, value)
         self.storage._p_changed = 1
 
-    @finalize
-    def copy(self):
-        return copy.deepcopy(self)
+    @plumb
+    def __getitem__(_next, self, key):
+        v = _next(self, key)
+        if INode.providedBy(v):
+            v.__parent__ = self
+        return v
 
 
 @implementer(IOrdered)

@@ -1,24 +1,23 @@
 from BTrees.OOBTree import OOBTree
-from ZODB.DB import DB
-from ZODB.FileStorage import FileStorage
 from node.ext.zodb import IZODBNode
 from node.ext.zodb import OOBTNode
 from node.ext.zodb import OOBTNodeAttributes
 from node.ext.zodb import OOBTodict
 from node.ext.zodb import Podict
+from node.ext.zodb import volatile_property
 from node.ext.zodb import ZODBNode
 from node.ext.zodb import ZODBNodeAttributes
-from node.ext.zodb import volatile_property
+from node.ext.zodb.utils import check_odict_consistency
 from node.ext.zodb.utils import ListHeadInconsistency
 from node.ext.zodb.utils import ListReferenceInconsistency
 from node.ext.zodb.utils import ListTailInconsistency
-from node.ext.zodb.utils import UnexpextedEndOfList
-from node.ext.zodb.utils import check_odict_consistency
 from node.ext.zodb.utils import reset_odict
+from node.ext.zodb.utils import UnexpextedEndOfList
 from node.tests import NodeTestCase
 from odict.pyodict import _nil
 from odict.pyodict import _odict
-import ZODB
+from ZODB.DB import DB
+from ZODB.FileStorage import FileStorage
 import os
 import shutil
 import tempfile

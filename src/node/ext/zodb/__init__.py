@@ -13,7 +13,6 @@ from node.ext.zodb.utils import OOBTodict
 from node.ext.zodb.utils import Podict
 from node.ext.zodb.utils import volatile_property
 from persistent import Persistent
-from plumber import plumber
 from plumber import plumbing
 
 

@@ -29,3 +29,5 @@
 /py2_zodb3/
 /py2_zodb5/
 /py3_zodb5/
+/.coverage
+/htmlcov/

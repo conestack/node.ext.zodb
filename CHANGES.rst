@@ -5,7 +5,13 @@ History
 1.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Use setter function for ``__parent__`` to set volatile parent on
+  ``ZODBBehavior`` instead of overriding ``__setattr__``.
+  [rnix, 2020-02-28]
+
+- Use ``plumb`` instead of overriding ``__getitem__`` to set parent on
+  ``ZODBBehavior``.
+  [rnix, 2020-02-28]
 
 
 1.2 (2017-07-18)
