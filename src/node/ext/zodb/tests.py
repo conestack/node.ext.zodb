@@ -278,7 +278,7 @@ class TestNodeExtZODB(NodeTestCase):
         new_size = self.storage.getSize()
         # ZODB 3 and ZODB 5 return different sizes so check whether lower or
         # equal higher value
-        self.assertTrue((new_size - old_size) / 1000 <= 160)
+        self.assertTrue((new_size - old_size) / 1000 <= 798)
         self.close()
 
     def test_OOBTNode(self):
@@ -487,7 +487,7 @@ class TestNodeExtZODB(NodeTestCase):
         new_size = self.storage.getSize()
         # ZODB 3 and ZODB 5 return different sizes so check whether lower or
         # equal higher value
-        self.assertTrue((new_size - old_size) / 1000 <= 160)
+        self.assertTrue((new_size - old_size) / 1000 <= 798)
         self.close()
 
     def test_utils(self):
