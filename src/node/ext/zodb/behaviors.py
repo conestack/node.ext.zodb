@@ -21,14 +21,10 @@ class ZODBBehavior(Behavior):
     """This behavior requires plumbed class to inherit from ``Persistent``.
     """
 
+    @override
     @property
     def __parent__(self):
         return self._v_parent
-
-    @override
-    @__parent__.setter
-    def __parent__(self, value):
-        self._v_parent = value
 
     @default
     def __call__(self):
@@ -43,6 +39,15 @@ class ZODBBehavior(Behavior):
         return copy.deepcopy(self)
 
     @plumb
+    def __setattr__(_next, self, name, value):
+        # adding a setter property for __parent__ not works, _p_changed gets
+        # set anyway as soon as settings the attribute. replace name instead to
+        # _v_parent
+        if name == '__parent__':
+            name = '_v_parent'
+        _next(self, name, value)
+
+    @plumb
     def __setitem__(_next, self, key, value):
         _next(self, key, value)
         self.storage._p_changed = 1
@@ -51,12 +56,19 @@ class ZODBBehavior(Behavior):
     def __getitem__(_next, self, key):
         v = _next(self, key)
         if INode.providedBy(v):
-            v.__parent__ = self
+            v._v_parent = self
         return v
 
 
 @implementer(IOrdered)
 class PodictStorage(ZODBBehavior, Storage):
+
+    @plumb
+    def __init__(next_, self, *a, **kw):
+        next_(self, *a, **kw)
+        storage = self.storage
+        storage.lh
+        storage.lt
 
     @default
     @instance_property
@@ -66,6 +78,13 @@ class PodictStorage(ZODBBehavior, Storage):
 
 @implementer(IOrdered)
 class OOBTodictStorage(ZODBBehavior, Storage):
+
+    @plumb
+    def __init__(next_, self, *a, **kw):
+        next_(self, *a, **kw)
+        storage = self.storage
+        storage.lh
+        storage.lt
 
     @default
     @instance_property
@@ -77,6 +96,11 @@ class OOBTodictStorage(ZODBBehavior, Storage):
 class ZODBAttributes(Behavior):
     attribute_access_for_attrs = default(False)
     attributes_factory = default(None)
+
+    @plumb
+    def __init__(next_, self, *a, **kw):
+        next_(self, *a, **kw)
+        self.attrs
 
     @finalize
     @property

@@ -5,9 +5,19 @@ History
 1.3 (unreleased)
 ----------------
 
-- Use setter function for ``__parent__`` to set volatile parent on
-  ``ZODBBehavior`` instead of overriding ``__setattr__``.
-  [rnix, 2020-02-28]
+- Access ``attrs`` when initializing nodes with ``ZODBAttributes`` behavior
+  applied to avoid lazy creation. Needed to prevent ``_p_changed`` being set on
+  first access.
+  [rnix, 2020-06-23]
+
+- Access ``storage`` when initializing nodes with ``PodictStorage`` or
+  ``OOBTodictStorage`` behaviors applied to avoid lazy creation. Needed
+  to prevent ``_p_changed`` being set on first access.
+  [rnix, 2020-06-23]
+
+- Use ``plumb`` instead of overriding ``__setattr__`` to change ``__parent__``
+  name to ``_v_parent`` on ``ZODBBehavior``.
+  [rnix, 2020-06-23]
 
 - Use ``plumb`` instead of overriding ``__getitem__`` to set parent on
   ``ZODBBehavior``.
