@@ -1,8 +1,7 @@
-
 License
 =======
 
-Copyright (c) 2012-2017, BlueDynamics Alliance, Austria, Germany, Switzerland
+Copyright (c) 2012-2020, BlueDynamics Alliance, Austria, Germany, Switzerland
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

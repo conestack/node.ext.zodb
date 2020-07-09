@@ -1,3 +1,17 @@
+.. image:: https://img.shields.io/pypi/v/node.ext.zodb.svg
+    :target: https://pypi.python.org/pypi/node.ext.zodb
+    :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/dm/node.ext.zodb.svg
+    :target: https://pypi.python.org/pypi/node.ext.zodb
+    :alt: Number of PyPI downloads
+
+.. image:: https://travis-ci.org/bluedynamics/node.ext.zodb.svg?branch=master
+    :target: https://travis-ci.org/bluedynamics/node.ext.zodb
+
+.. image:: https://coveralls.io/repos/github/bluedynamics/node.ext.zodb/badge.svg?branch=master
+    :target: https://coveralls.io/github/bluedynamics/node.ext.zodb?branch=master
+
 ``node.ext.zodb`` is a persistent node implementation for the ZODB.
 
 For more information about ``node`` see https://pypi.python.org/pypi/node
@@ -26,5 +40,4 @@ Contributors
 ============
 
 - Robert Niederreiter
-
 - Jens Klein

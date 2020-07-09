@@ -1,8 +1,7 @@
-
-History
+Changes
 =======
 
-1.3 (unreleased)
+1.3 (2020-07-09)
 ----------------
 
 - Access ``attrs`` when initializing nodes with ``ZODBAttributes`` behavior
