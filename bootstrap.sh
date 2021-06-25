@@ -11,9 +11,9 @@ if [ -x "$(which python)" ]; then
     ./py2_zodb3/bin/pip install zope.component
     ./py2_zodb3/bin/pip install zope.deprecation
     ./py2_zodb3/bin/pip install ZODB3==3.10.7
-    ./py2_zodb3/bin/pip install https://github.com/bluedynamics/odict/archive/master.zip
-    ./py2_zodb3/bin/pip install https://github.com/bluedynamics/plumber/archive/master.zip
-    ./py2_zodb3/bin/pip install https://github.com/bluedynamics/node/archive/master.zip
+    ./py2_zodb3/bin/pip install https://github.com/conestack/odict/archive/master.zip
+    ./py2_zodb3/bin/pip install https://github.com/conestack/plumber/archive/master.zip
+    ./py2_zodb3/bin/pip install https://github.com/conestack/node/archive/master.zip
     ./py2_zodb3/bin/pip install -e .
 
     rm -r py2_zodb5
@@ -26,9 +26,9 @@ if [ -x "$(which python)" ]; then
     ./py2_zodb5/bin/pip install zope.component
     ./py2_zodb5/bin/pip install zope.deprecation
     ./py2_zodb5/bin/pip install ZODB3==3.11.0
-    ./py2_zodb5/bin/pip install https://github.com/bluedynamics/odict/archive/master.zip
-    ./py2_zodb5/bin/pip install https://github.com/bluedynamics/plumber/archive/master.zip
-    ./py2_zodb5/bin/pip install https://github.com/bluedynamics/node/archive/master.zip
+    ./py2_zodb5/bin/pip install https://github.com/conestack/odict/archive/master.zip
+    ./py2_zodb5/bin/pip install https://github.com/conestack/plumber/archive/master.zip
+    ./py2_zodb5/bin/pip install https://github.com/conestack/node/archive/master.zip
     ./py2_zodb5/bin/pip install -e .
 fi
 if [ -x "$(which python3)" ]; then
@@ -42,8 +42,8 @@ if [ -x "$(which python3)" ]; then
     ./py3_zodb5/bin/pip install zope.component
     ./py3_zodb5/bin/pip install zope.deprecation
     ./py2_zodb5/bin/pip install ZODB3==3.11.0
-    ./py3_zodb5/bin/pip install https://github.com/bluedynamics/odict/archive/master.zip
-    ./py3_zodb5/bin/pip install https://github.com/bluedynamics/plumber/archive/master.zip
-    ./py3_zodb5/bin/pip install https://github.com/bluedynamics/node/archive/master.zip
+    ./py3_zodb5/bin/pip install https://github.com/conestack/odict/archive/master.zip
+    ./py3_zodb5/bin/pip install https://github.com/conestack/plumber/archive/master.zip
+    ./py3_zodb5/bin/pip install https://github.com/conestack/node/archive/master.zip
     ./py3_zodb5/bin/pip install -e .
 fi
