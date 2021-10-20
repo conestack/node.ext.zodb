@@ -50,7 +50,7 @@ setup(
     install_requires=[
         'setuptools',
         'node',
-        'ZODB3'
+        'ZODB'
     ],
     test_suite='odict.tests'
 )

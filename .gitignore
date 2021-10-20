@@ -26,8 +26,7 @@
 /include/
 /lib/
 /local/
-/py2_zodb3/
-/py2_zodb5/
-/py3_zodb5/
+/py2/
+/py3/
 /.coverage
 /htmlcov/
