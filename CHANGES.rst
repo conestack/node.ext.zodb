@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.4 (unreleased)
+1.4 (2021-10-21)
 ----------------
 
 - Implement ``_list_factory`` on ``Podict`` and ``OOBTodict`` and use
