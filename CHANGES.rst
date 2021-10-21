@@ -4,7 +4,13 @@ Changes
 1.4 (unreleased)
 ----------------
 
-- No changes yet.
+- Implement ``_list_factory`` on ``Podict`` and ``OOBTodict`` and use
+  ``PersistentList`` for internal double linked list triples to allow
+  transaction property detect changes.
+  [rnix, jensens]
+
+- Drop ZODB3.
+  [rnix]
 
 
 1.3 (2020-07-09)

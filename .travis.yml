@@ -14,7 +14,7 @@ install:
   - pip install zope.lifecycleevent
   - pip install zope.component
   - pip install zope.deprecation
-  - pip install ZODB3==3.11.0
+  - pip install ZODB
   - pip install https://github.com/conestack/odict/archive/master.zip
   - pip install https://github.com/conestack/plumber/archive/master.zip
   - pip install https://github.com/conestack/node/archive/master.zip

@@ -2,6 +2,7 @@ from BTrees.OOBTree import OOBTree
 from odict.pyodict import _nil
 from odict.pyodict import _odict
 from persistent.dict import PersistentDict
+from persistent.list import PersistentList
 
 
 class Podict(_odict, PersistentDict):
@@ -9,11 +10,17 @@ class Podict(_odict, PersistentDict):
     def _dict_impl(self):
         return PersistentDict
 
+    def _list_factory(self):
+        return PersistentList
+
 
 class OOBTodict(_odict, OOBTree):
 
     def _dict_impl(self):
         return OOBTree
+
+    def _list_factory(self):
+        return PersistentList
 
     @property
     def lh(self):

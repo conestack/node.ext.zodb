@@ -16,6 +16,7 @@ from node.ext.zodb.utils import UnexpextedEndOfList
 from node.tests import NodeTestCase
 from odict.pyodict import _nil
 from odict.pyodict import _odict
+from persistent.list import PersistentList
 from ZODB.DB import DB
 from ZODB.FileStorage import FileStorage
 import os
@@ -52,13 +53,15 @@ class TestNodeExtZODB(NodeTestCase):
         bt = OOBTree()
         root['btree'] = bt
         cld_bt = OOBTree()
-        bt['key'] = [1, cld_bt, 3]
+        bt['key'] = PersistentList([1, cld_bt, 3])
         self.check_output("""\
         [1, <BTrees.OOBTree.OOBTree object at ...>, 3]
         """, str(bt['key']))
+
         # Commit and reopen database
         self.close()
         root = self.open()
+
         # Check whether we get back object as it was stored
         self.check_output("""\
         [1, <BTrees.OOBTree.OOBTree object at ...>, 3]
@@ -71,19 +74,27 @@ class TestNodeExtZODB(NodeTestCase):
         # Test bases
         od = OOBTodict()
         self.assertEqual(od.__class__.__bases__, (_odict, OOBTree))
+
         # Test dict impl
-        cls = od._dict_impl()
-        self.assertTrue(cls is OOBTree)
+        dict_ = od._dict_impl()
+        self.assertTrue(dict_ is OOBTree)
+
+        # Test list factory
+        list_ = od._list_factory()
+        self.assertTrue(list_ is PersistentList)
+
         # Test list tail and head
         od = OOBTodict()
         self.assertEqual(od.lt, _nil)
         self.assertEqual(od.lh, _nil)
-        self.assertEqual(cls.__getitem__(od, '____lt'), _nil)
-        self.assertEqual(cls.__getitem__(od, '____lh'), _nil)
-        self.assertEqual(sorted(cls.keys(od)), ['____lh', '____lt'])
+        self.assertEqual(dict_.__getitem__(od, '____lt'), _nil)
+        self.assertEqual(dict_.__getitem__(od, '____lh'), _nil)
+        self.assertEqual(sorted(dict_.keys(od)), ['____lh', '____lt'])
+
         # Add OOBTodict to root
         root = self.open()
         od = root['oobtodict'] = OOBTodict()
+
         # Add some children
         foo = od['foo'] = OOBTodict()
         bar = od['bar'] = OOBTodict()
@@ -93,87 +104,109 @@ class TestNodeExtZODB(NodeTestCase):
         ('bar', OOBTodict()),
         ('baz', OOBTodict())])
         """, repr(od))
+
         # Internal data representation
         self.assertEqual(
-            sorted(cls.keys(od)),
+            sorted(dict_.keys(od)),
             ['____lh', '____lt', 'bar', 'baz', 'foo']
         )
-        self.assertEqual(cls.__getitem__(od, '____lt'), 'baz')
-        self.assertEqual(cls.__getitem__(od, '____lh'), 'foo')
-        self.assertEqual(cls.__getitem__(od, 'foo'), [_nil, foo, 'bar'])
-        self.assertEqual(cls.__getitem__(od, 'bar'), ['foo', bar, 'baz'])
-        self.assertEqual(cls.__getitem__(od, 'baz'), ['bar', baz, _nil])
+        self.assertEqual(dict_.__getitem__(od, '____lt'), 'baz')
+        self.assertEqual(dict_.__getitem__(od, '____lh'), 'foo')
+        self.assertEqual(dict_.__getitem__(od, 'foo'), [_nil, foo, 'bar'])
+        self.assertEqual(dict_.__getitem__(od, 'bar'), ['foo', bar, 'baz'])
+        self.assertEqual(dict_.__getitem__(od, 'baz'), ['bar', baz, _nil])
+        self.assertIsInstance(dict_.__getitem__(od, 'baz'), PersistentList)
+
         # List tail and list head
         self.assertEqual(od.lt, 'baz')
         self.assertEqual(od.lh, 'foo')
+
         # Check keys
         self.assertEqual(od.keys(), ['foo', 'bar', 'baz'])
+
         # Check iterkeys
         self.assertEqual(list(od.iterkeys()), ['foo', 'bar', 'baz'])
+
         # Check values
         self.assertEqual(od.values(), [foo, bar, baz])
+
         # Check itervalues
         self.assertEqual(list(od.itervalues()), [foo, bar, baz])
+
         # Check items
         self.assertEqual(
             od.items(),
             [('foo', foo), ('bar', bar), ('baz', baz)]
         )
+
         # Check iteritems
         self.assertEqual(
             list(od.iteritems()),
             [('foo', foo), ('bar', bar), ('baz', baz)]
         )
+
         # Check __iter__
         self.assertEqual(list(od.__iter__()), ['foo', 'bar', 'baz'])
+
         # Check __getitem__
         self.assertEqual(od['foo'], foo)
+
         # Check __delitem__
         del od['baz']
         self.assertTrue('foo' in od)
         self.assertTrue('bar' in od)
         self.assertFalse('baz' in od)
+
         # Check __len__
         self.assertEqual(len(od), 2)
+
         # Check get
         self.assertEqual(od.get('foo'), foo)
         self.assertEqual(od.get('baz'), None)
+
         # Check copy
         od2 = od.copy()
         self.check_output("""\
         OOBTodict([('foo', OOBTodict()), ('bar', OOBTodict())])
         """, repr(od2))
+
         # Copied object not original one
         self.assertFalse(od is od2)
         self.assertEqual(od2.keys(), ['foo', 'bar'])
+
         # Check sort
         od2.sort(key=lambda x: x[0])
         self.check_output("""\
         OOBTodict([('bar', OOBTodict()), ('foo', OOBTodict())])
         """, repr(od2))
         self.assertEqual(od2.keys(), ['bar', 'foo'])
+
         # Check update
         bam = OOBTodict()
         od2.update([('bam', bam)])
         self.assertEqual(od2.keys(), ['bar', 'foo', 'bam'])
+
         # Check popitem
         self.assertEqual(od2.popitem(), ('bam', bam))
         self.assertEqual(od2.keys(), ['bar', 'foo'])
+
         # Reopen database connection and check structure
         self.close()
         root = self.open()
         self.assertEqual(list(root.keys()), ['oobtodict'])
         od = root['oobtodict']
         self.assertEqual(
-            sorted(cls.keys(od)),
+            sorted(dict_.keys(od)),
             ['____lh', '____lt', 'bar', 'foo']
         )
-        self.assertEqual(cls.__getitem__(od, '____lh'), 'foo')
-        self.assertEqual(cls.__getitem__(od, '____lt'), 'bar')
-        self.assertEqual(cls.__getitem__(od, 'foo'), [_nil, od['foo'], 'bar'])
-        self.assertEqual(cls.__getitem__(od, 'bar'), ['foo', od['bar'], _nil])
+        self.assertEqual(dict_.__getitem__(od, '____lh'), 'foo')
+        self.assertEqual(dict_.__getitem__(od, '____lt'), 'bar')
+        self.assertEqual(dict_.__getitem__(od, 'foo'), [_nil, od['foo'], 'bar'])
+        self.assertEqual(dict_.__getitem__(od, 'bar'), ['foo', od['bar'], _nil])
         self.assertEqual(od.lt, 'bar')
         self.assertEqual(od.lh, 'foo')
+        self.assertIsInstance(dict_.__getitem__(od, 'bar'), PersistentList)
+
         # Add attributes and reopen database connection and check structure
         od['baz'] = OOBTodict()
         od['bam'] = OOBTodict()
@@ -181,18 +214,19 @@ class TestNodeExtZODB(NodeTestCase):
         root = self.open()
         od = root['oobtodict']
         self.assertEqual(
-            sorted(cls.keys(od)),
+            sorted(dict_.keys(od)),
             ['____lh', '____lt', 'bam', 'bar', 'baz', 'foo']
         )
-        self.assertEqual(cls.__getitem__(od, '____lh'), 'foo')
-        self.assertEqual(cls.__getitem__(od, '____lt'), 'bam')
-        self.assertEqual(cls.__getitem__(od, 'bam'), ['baz', od['bam'], _nil])
-        self.assertEqual(cls.__getitem__(od, 'bar'), ['foo', od['bar'], 'baz'])
-        self.assertEqual(cls.__getitem__(od, 'baz'), ['bar', od['baz'], 'bam'])
-        self.assertEqual(cls.__getitem__(od, 'foo'), [_nil, od['foo'], 'bar'])
+        self.assertEqual(dict_.__getitem__(od, '____lh'), 'foo')
+        self.assertEqual(dict_.__getitem__(od, '____lt'), 'bam')
+        self.assertEqual(dict_.__getitem__(od, 'bam'), ['baz', od['bam'], _nil])
+        self.assertEqual(dict_.__getitem__(od, 'bar'), ['foo', od['bar'], 'baz'])
+        self.assertEqual(dict_.__getitem__(od, 'baz'), ['bar', od['baz'], 'bam'])
+        self.assertEqual(dict_.__getitem__(od, 'foo'), [_nil, od['foo'], 'bar'])
         self.assertEqual(od.keys(), ['foo', 'bar', 'baz', 'bam'])
         self.assertEqual(od.lt, 'bam')
         self.assertEqual(od.lh, 'foo')
+
         # Add and delete attributes and reopen database connection and check
         # structure
         del od['bar']
@@ -203,24 +237,25 @@ class TestNodeExtZODB(NodeTestCase):
         od = root['oobtodict']
         self.assertEqual(od.keys(), ['foo', 'baz', 'bam', 'cow', 'chick'])
         self.assertEqual(
-            sorted(cls.keys(od)),
+            sorted(dict_.keys(od)),
             ['____lh', '____lt', 'bam', 'baz', 'chick', 'cow', 'foo']
         )
-        self.assertEqual(cls.__getitem__(od, '____lh'), 'foo')
-        self.assertEqual(cls.__getitem__(od, '____lt'), 'chick')
-        self.assertEqual(cls.__getitem__(od, 'bam'), ['baz', od['bam'], 'cow'])
-        self.assertEqual(cls.__getitem__(od, 'baz'), ['foo', od['baz'], 'bam'])
+        self.assertEqual(dict_.__getitem__(od, '____lh'), 'foo')
+        self.assertEqual(dict_.__getitem__(od, '____lt'), 'chick')
+        self.assertEqual(dict_.__getitem__(od, 'bam'), ['baz', od['bam'], 'cow'])
+        self.assertEqual(dict_.__getitem__(od, 'baz'), ['foo', od['baz'], 'bam'])
         self.assertEqual(
-            cls.__getitem__(od, 'chick'),
+            dict_.__getitem__(od, 'chick'),
             ['cow', od['chick'], _nil]
         )
         self.assertEqual(
-            cls.__getitem__(od, 'cow'),
+            dict_.__getitem__(od, 'cow'),
             ['bam', od['cow'], 'chick']
         )
-        self.assertEqual(cls.__getitem__(od, 'foo'), [_nil, od['foo'], 'baz'])
+        self.assertEqual(dict_.__getitem__(od, 'foo'), [_nil, od['foo'], 'baz'])
         self.assertEqual(od.lh, 'foo')
         self.assertEqual(od.lt, 'chick')
+
         # Delete from database
         del root['oobtodict']
         self.close()
@@ -228,11 +263,14 @@ class TestNodeExtZODB(NodeTestCase):
     def test_ZODBNode(self):
         # Based on PersistentDict as storage
         zodbnode = ZODBNode('zodbnode')
+
         # Interface check
         self.assertTrue(IZODBNode.providedBy(zodbnode))
+
         # Storage check
         self.assertTrue(isinstance(zodbnode.storage, Podict))
         self.assertTrue(isinstance(zodbnode._storage, Podict))
+
         # Structure check
         root = self.open()
         root[zodbnode.__name__] = zodbnode
@@ -247,6 +285,7 @@ class TestNodeExtZODB(NodeTestCase):
             '  <class \'node.ext.zodb.ZODBNode\'>: child\n'
         ))
         self.assertEqual(list(root.keys()), ['zodbnode'])
+
         # Reopen database connection and check again
         self.close()
         root = self.open()
@@ -256,17 +295,20 @@ class TestNodeExtZODB(NodeTestCase):
             '<class \'node.ext.zodb.ZODBNode\'>: zodbnode\n'
             '  <class \'node.ext.zodb.ZODBNode\'>: child\n'
         ))
+
         # Delete child node
         del zodbnode['child']
         self.assertEqual(zodbnode.treerepr(), (
             '<class \'node.ext.zodb.ZODBNode\'>: zodbnode\n'
         ))
+
         # Check node attributes
         self.assertTrue(isinstance(zodbnode.attrs, ZODBNodeAttributes))
         self.assertEqual(zodbnode.attrs.name, '_attrs')
         zodbnode.attrs['foo'] = 1
         bar = zodbnode.attrs['bar'] = ZODBNode()
         self.assertEqual(zodbnode.attrs.values(), [1, bar])
+
         # Fill root with some ZODBNodes and check memory usage
         transaction.commit()
         old_size = self.storage.getSize()
@@ -276,19 +318,20 @@ class TestNodeExtZODB(NodeTestCase):
         self.assertEqual(len(root['largezodb']), 1000)
         transaction.commit()
         new_size = self.storage.getSize()
-        # ZODB 3 and ZODB 5 return different sizes so check whether lower or
-        # equal higher value
-        self.assertTrue((new_size - old_size) / 1000 <= 798)
+        self.assertTrue((new_size - old_size) / 1000 <= 899)
         self.close()
 
     def test_OOBTNode(self):
         # Based on OOBTree as storage
         oobtnode = OOBTNode('oobtnode')
+
         # Interface check
         self.assertTrue(IZODBNode.providedBy(oobtnode))
+
         # Storage check
         self.assertTrue(isinstance(oobtnode.storage, OOBTodict))
         self.assertTrue(isinstance(oobtnode._storage, OOBTodict))
+
         # Structure check
         root = self.open()
         root[oobtnode.__name__] = oobtnode
@@ -303,6 +346,7 @@ class TestNodeExtZODB(NodeTestCase):
         self.check_output("""\
         OOBTodict([('child', <OOBTNode object 'child' at ...>)])
         """, repr(oobtnode.storage))
+
         # Reopen database connection and check again
         self.close()
         root = self.open()
@@ -314,21 +358,25 @@ class TestNodeExtZODB(NodeTestCase):
             '  <class \'node.ext.zodb.OOBTNode\'>: child\n'
         ))
         self.assertTrue(oobtnode['child'].__parent__ is oobtnode)
+
         # Delete child node
         del oobtnode['child']
         transaction.commit()
         self.assertEqual(oobtnode.treerepr(), (
             '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
         ))
+
         # Check node attributes
         self.assertTrue(isinstance(oobtnode.attrs, OOBTNodeAttributes))
         self.assertEqual(oobtnode.attrs.name, '_attrs')
         oobtnode.attrs['foo'] = 1
         bar = oobtnode.attrs['bar'] = OOBTNode()
         self.assertEqual(oobtnode.attrs.values(), [1, bar])
+
         # Check attribute access for node attributes
         oobtnode.attribute_access_for_attrs = True
         self.assertEqual(oobtnode.attrs.foo, 1)
+
         # Check whether flag has been persisted
         self.close()
         root = self.open()
@@ -338,6 +386,7 @@ class TestNodeExtZODB(NodeTestCase):
         oobtnode.attrs.foo = 2
         self.assertEqual(oobtnode.attrs.foo, 2)
         oobtnode.attribute_access_for_attrs = False
+
         # Check attrs storage
         self.check_output("""\
         OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
@@ -353,52 +402,56 @@ class TestNodeExtZODB(NodeTestCase):
         self.check_output("""\
         OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
         """, repr(oobtnode.attrs.storage))
+
         # Check internal datastructure of attrs
         storage = oobtnode.attrs.storage
-        cls = storage._dict_impl()
-        self.assertTrue(cls is OOBTree)
+        dict_ = storage._dict_impl()
+        self.assertTrue(dict_ is OOBTree)
         self.assertEqual(
-            sorted(cls.keys(storage)),
+            sorted(dict_.keys(storage)),
             ['____lh', '____lt', 'bar', 'foo']
         )
+
         # values ``foo`` and ``bar`` are list tail and list head values
-        self.assertEqual(cls.__getitem__(storage, '____lh'), 'foo')
-        self.assertEqual(cls.__getitem__(storage, '____lt'), 'bar')
+        self.assertEqual(dict_.__getitem__(storage, '____lh'), 'foo')
+        self.assertEqual(dict_.__getitem__(storage, '____lt'), 'bar')
         attrs = oobtnode.attrs
         self.assertEqual(
-            cls.__getitem__(storage, 'bar'),
+            dict_.__getitem__(storage, 'bar'),
             ['foo', attrs['bar'], _nil]
         )
         self.assertEqual(
-            cls.__getitem__(storage, 'foo'),
+            dict_.__getitem__(storage, 'foo'),
             [_nil, 2, 'bar']
         )
         self.assertEqual(storage.lt, 'bar')
         self.assertEqual(storage.lh, 'foo')
+
         # Add attribute, reopen database connection and check again
         oobtnode.attrs['baz'] = 'some added value'
         self.close()
         root = self.open()
         oobtnode = root['oobtnode']
         storage = oobtnode.attrs.storage
-        cls = storage._dict_impl()
-        self.assertEqual(cls.__getitem__(storage, '____lh'), 'foo')
-        self.assertEqual(cls.__getitem__(storage, '____lt'), 'baz')
+        dict_ = storage._dict_impl()
+        self.assertEqual(dict_.__getitem__(storage, '____lh'), 'foo')
+        self.assertEqual(dict_.__getitem__(storage, '____lt'), 'baz')
         attrs = oobtnode.attrs
         self.assertEqual(
-            cls.__getitem__(storage, 'bar'),
+            dict_.__getitem__(storage, 'bar'),
             ['foo', attrs['bar'], 'baz']
         )
         self.assertEqual(
-            cls.__getitem__(storage, 'baz'),
+            dict_.__getitem__(storage, 'baz'),
             ['bar', 'some added value', _nil]
         )
         self.assertEqual(
-            cls.__getitem__(storage, 'foo'),
+            dict_.__getitem__(storage, 'foo'),
             [_nil, 2, 'bar']
         )
         self.assertEqual(storage.lt, 'baz')
         self.assertEqual(storage.lh, 'foo')
+
         # Test copy and detach
         oobtnode['c1'] = OOBTNode()
         oobtnode['c2'] = OOBTNode()
@@ -409,6 +462,7 @@ class TestNodeExtZODB(NodeTestCase):
             '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
             '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
         ))
+
         # Detach c1
         c1 = oobtnode.detach('c1')
         self.assertTrue(isinstance(c1, OOBTNode))
@@ -418,6 +472,7 @@ class TestNodeExtZODB(NodeTestCase):
             '  <class \'node.ext.zodb.OOBTNode\'>: c2\n'
             '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
         ))
+
         # Add c1 as child to c2
         oobtnode['c2'][c1.name] = c1
         self.assertEqual(oobtnode.treerepr(), (
@@ -426,6 +481,7 @@ class TestNodeExtZODB(NodeTestCase):
             '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
             '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
         ))
+
         # Reopen database connection and check again
         self.close()
         root = self.open()
@@ -436,6 +492,7 @@ class TestNodeExtZODB(NodeTestCase):
             '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
             '  <class \'node.ext.zodb.OOBTNode\'>: c3\n'
         ))
+
         # Copy c1
         c1_copy = oobtnode['c2']['c1'].copy()
         self.assertFalse(c1_copy is oobtnode['c2']['c1'])
@@ -462,6 +519,7 @@ class TestNodeExtZODB(NodeTestCase):
             oobtnode['c2']['c1'].attrs is oobtnode['c4']['c1'].attrs
         )
         transaction.commit()
+
         # Swap nodes
         oobtnode.swap(oobtnode['c1'], oobtnode['c3'])
         oobtnode.swap(oobtnode['c1'], oobtnode['c2'])
@@ -474,9 +532,15 @@ class TestNodeExtZODB(NodeTestCase):
             '  <class \'node.ext.zodb.OOBTNode\'>: c4\n'
             '    <class \'node.ext.zodb.OOBTNode\'>: c1\n'
         ))
+        st = oobtnode.storage
+        self.assertIsInstance(dict_.__getitem__(st, 'c1'), PersistentList)
+        self.assertIsInstance(dict_.__getitem__(st, 'c2'), PersistentList)
+        self.assertIsInstance(dict_.__getitem__(st, 'c3'), PersistentList)
+
         # Calling nodes does nothing, persisting is left to transaction
         # mechanism
         oobtnode()
+
         # Fill root with some OOBTNodes and check memory usage
         old_size = self.storage.getSize()
         root['large'] = OOBTNode()
@@ -485,9 +549,7 @@ class TestNodeExtZODB(NodeTestCase):
         self.assertEqual(len(root['large']), 1000)
         transaction.commit()
         new_size = self.storage.getSize()
-        # ZODB 3 and ZODB 5 return different sizes so check whether lower or
-        # equal higher value
-        self.assertTrue((new_size - old_size) / 1000 <= 798)
+        self.assertTrue((new_size - old_size) / 1000 <= 914)
         self.close()
 
     def test_utils(self):
@@ -503,19 +565,21 @@ class TestNodeExtZODB(NodeTestCase):
         self.assertTrue('_v_foo' in dir(inst))
         self.assertEqual(inst._v_foo, 'foo')
         self.assertTrue(inst._v_foo is inst.foo)
+
         # Check odict consistency
         od = OOBTodict()
         od['foo'] = 'foo'
         od['bar'] = 'bar'
         od['baz'] = 'baz'
+
         # Ignore key callback for OOBTree odicts needs to ignore keys starting
         # with four underscores since these entries define the object
         # attributes
-
         def ignore_key(key):
             return key.startswith('____')
 
         check_odict_consistency(od, ignore_key=ignore_key)
+
         # Check if ``_nil`` marker set irregulary
         dict_impl = od._dict_impl()
         dict_impl.__setitem__(od, 'bam', ['foo', 'bam', _nil])
@@ -535,9 +599,11 @@ class TestNodeExtZODB(NodeTestCase):
             'list. Resulting key count does not match:  4 != 3'
         )
         self.assertEqual(str(err), expected)
+
         # Manually sanitize odict
         dict_impl.__delitem__(od, 'bam')
         check_odict_consistency(od, ignore_key=ignore_key)
+
         # Check whether double linked list contains inexistent key
         dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'inexistent'])
         err = self.expect_error(
@@ -551,9 +617,11 @@ class TestNodeExtZODB(NodeTestCase):
             'entry: \'inexistent\' not in [\'bar\', \'baz\', \'foo\']'
         )
         self.assertEqual(str(err), expected)
+
         # Manually sanitize odict
         dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'bar'])
         check_odict_consistency(od, ignore_key=ignore_key)
+
         # Check broken list head
         od.lh = 'inexistent'
         err = self.expect_error(
@@ -567,9 +635,11 @@ class TestNodeExtZODB(NodeTestCase):
             '\'inexistent\' not in [\'bar\', \'baz\', \'foo\']'
         )
         self.assertEqual(str(err), expected)
+
         # Manually sanitize odict
         od.lh = 'foo'
         check_odict_consistency(od, ignore_key=ignore_key)
+
         # Check broken list tail
         od.lt = 'inexistent'
         err = self.expect_error(
@@ -583,9 +653,11 @@ class TestNodeExtZODB(NodeTestCase):
             '\'inexistent\' not in [\'bar\', \'baz\', \'foo\']'
         )
         self.assertEqual(str(err), expected)
+
         # Manually sanitize odict
         od.lt = 'baz'
         check_odict_consistency(od, ignore_key=ignore_key)
+
         # Reset odict
         od.lh = 'inexistent'
         od.lt = 'baz'
