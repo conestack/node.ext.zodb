@@ -4,7 +4,9 @@ Changes
 1.5 (unreleased)
 ----------------
 
-- No changes yet.
+- Rename deprecated ``allow_non_node_childs`` to ``allow_non_node_children``
+  on ``ZODBNodeAttributes`` and ``OOBTNodeAttributes``.
+  [rnix]
 
 
 1.4 (2021-10-21)

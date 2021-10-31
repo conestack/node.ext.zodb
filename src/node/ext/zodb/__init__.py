@@ -23,7 +23,7 @@ from plumber import plumbing
     Nodify,
     PodictStorage)
 class ZODBNodeAttributes(Persistent):
-    allow_non_node_childs = True
+    allow_non_node_children = True
 
 
 @plumbing(
@@ -46,7 +46,7 @@ class ZODBNode(Persistent):
     Nodify,
     OOBTodictStorage)
 class OOBTNodeAttributes(Persistent):
-    allow_non_node_childs = True
+    allow_non_node_children = True
 
 
 @plumbing(
