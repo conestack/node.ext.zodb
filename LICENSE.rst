@@ -1,7 +1,7 @@
 License
 =======
 
-Copyright (c) 2012-2021, BlueDynamics Alliance, Austria, Germany, Switzerland
+Copyright (c) 2012-2022, BlueDynamics Alliance, Austria, Germany, Switzerland
 Copyright (c) 2021, Node Contributors
 All rights reserved.
 
