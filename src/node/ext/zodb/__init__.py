@@ -1,8 +1,8 @@
-from node.behaviors import Adopt
+from node.behaviors import MappingAdopt
 from node.behaviors import AsAttrAccess
 from node.behaviors import DefaultInit
-from node.behaviors import NodeChildValidate
-from node.behaviors import Nodify
+from node.behaviors import MappingConstraints
+from node.behaviors import MappingNode
 from node.behaviors import Order
 from node.ext.zodb.behaviors import OOBTodictStorage
 from node.ext.zodb.behaviors import PodictStorage
@@ -17,22 +17,22 @@ from plumber import plumbing
 
 
 @plumbing(
-    NodeChildValidate,
-    Adopt,
+    MappingConstraints,
+    MappingAdopt,
     DefaultInit,
-    Nodify,
+    MappingNode,
     PodictStorage)
 class ZODBNodeAttributes(Persistent):
-    allow_non_node_children = True
+    child_constraints = None
 
 
 @plumbing(
-    NodeChildValidate,
-    Adopt,
+    MappingConstraints,
+    MappingAdopt,
     Order,
     AsAttrAccess,
     DefaultInit,
-    Nodify,
+    MappingNode,
     ZODBAttributes,
     PodictStorage)
 class ZODBNode(Persistent):
@@ -40,22 +40,22 @@ class ZODBNode(Persistent):
 
 
 @plumbing(
-    NodeChildValidate,
-    Adopt,
+    MappingConstraints,
+    MappingAdopt,
     DefaultInit,
-    Nodify,
+    MappingNode,
     OOBTodictStorage)
 class OOBTNodeAttributes(Persistent):
-    allow_non_node_children = True
+    child_constraints = None
 
 
 @plumbing(
-    NodeChildValidate,
-    Adopt,
+    MappingConstraints,
+    MappingAdopt,
     Order,
     AsAttrAccess,
     DefaultInit,
-    Nodify,
+    MappingNode,
     ZODBAttributes,
     OOBTodictStorage)
 class OOBTNode(Persistent):

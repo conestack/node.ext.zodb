@@ -1,4 +1,4 @@
-from node.behaviors import Storage
+from node.behaviors import MappingStorage
 from node.ext.zodb.interfaces import IZODBNode
 from node.ext.zodb.utils import OOBTodict
 from node.ext.zodb.utils import Podict
@@ -61,7 +61,7 @@ class ZODBBehavior(Behavior):
 
 
 @implementer(IOrdered)
-class PodictStorage(ZODBBehavior, Storage):
+class PodictStorage(ZODBBehavior, MappingStorage):
 
     @plumb
     def __init__(next_, self, *a, **kw):
@@ -77,7 +77,7 @@ class PodictStorage(ZODBBehavior, Storage):
 
 
 @implementer(IOrdered)
-class OOBTodictStorage(ZODBBehavior, Storage):
+class OOBTodictStorage(ZODBBehavior, MappingStorage):
 
     @plumb
     def __init__(next_, self, *a, **kw):

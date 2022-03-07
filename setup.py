@@ -49,7 +49,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'node',
+        'node>0.999',
         'ZODB'
     ],
     test_suite='odict.tests'

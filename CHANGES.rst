@@ -4,8 +4,19 @@ Changes
 1.5 (unreleased)
 ----------------
 
-- Rename deprecated ``allow_non_node_childs`` to ``allow_non_node_children``
-  on ``ZODBNodeAttributes`` and ``OOBTNodeAttributes``.
+- Replace deprecated use of ``Storage`` by ``MappingStorage``.
+  [rnix]
+
+- Replace deprecated use of ``Nodify`` by ``MappingNode``.
+  [rnix]
+
+- Replace deprecated use of ``Adopt`` by ``MappingAdopt``.
+  [rnix]
+
+- Replace deprecated use of ``NodeChildValidate`` by ``MappingConstraints``.
+  [rnix]
+
+- Replace deprecated use of ``allow_non_node_childs`` by ``child_constraints``.
   [rnix]
 
 
