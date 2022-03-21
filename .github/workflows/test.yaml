@@ -13,6 +13,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
+          - windows-latest
           - macos-latest
 
         python:
@@ -34,6 +35,7 @@ jobs:
         run: |
           pip install wheel
           pip install coverage
+          pip install --no-use-pep517 BTrees
           pip install -e .[test]
 
       - name: Run tests
