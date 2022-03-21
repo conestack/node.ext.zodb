@@ -94,13 +94,11 @@ def volatile_property(func):
 ##############################################################################
 
 class ConsistencyError(Exception):
-    """Base exception for odict data structure inconsistencies.
-    """
+    """Base exception for odict data structure inconsistencies."""
 
 
 class ListHeadInconsistency(ConsistencyError):
-    """Thrown if list head references non existing dict entry.
-    """
+    """Thrown if list head references non existing dict entry."""
 
     def __init__(self, error, orgin_keys):
         self.missing = str(error)
@@ -114,8 +112,7 @@ class ListHeadInconsistency(ConsistencyError):
 
 
 class ListTailInconsistency(ConsistencyError):
-    """Thrown if list tail references non existing dict entry.
-    """
+    """Thrown if list tail references non existing dict entry."""
 
     def __init__(self, error, orgin_keys):
         self.missing = str(error)
@@ -144,8 +141,7 @@ class ListReferenceInconsistency(ConsistencyError):
 
 
 class UnexpextedEndOfList(ConsistencyError):
-    """Thrown if unexpected ``_nil`` pointer found in double linked list.
-    """
+    """Thrown if unexpected ``_nil`` pointer found in double linked list."""
 
     def __init__(self, od_keys, orgin_keys):
         self.od_keys = od_keys
@@ -187,8 +183,7 @@ def check_odict_consistency(od, ignore_key=None):
 
 
 def reset_odict(od, ignore_key=None):
-    """Reset odict. Order will break.
-    """
+    """Reset odict. Order will break."""
     dict_impl = od._dict_impl()
     keys = dict_impl.keys(od)
     if ignore_key is not None:

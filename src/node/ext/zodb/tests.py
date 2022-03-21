@@ -54,7 +54,7 @@ class TestNodeExtZODB(NodeTestCase):
         root['btree'] = bt
         cld_bt = OOBTree()
         bt['key'] = PersistentList([1, cld_bt, 3])
-        self.check_output("""\
+        self.checkOutput("""\
         [1, <BTrees.OOBTree.OOBTree object at ...>, 3]
         """, str(bt['key']))
 
@@ -63,7 +63,7 @@ class TestNodeExtZODB(NodeTestCase):
         root = self.open()
 
         # Check whether we get back object as it was stored
-        self.check_output("""\
+        self.checkOutput("""\
         [1, <BTrees.OOBTree.OOBTree object at ...>, 3]
         """, str(root['btree']['key']))
         # Delete OOBTree
@@ -99,7 +99,7 @@ class TestNodeExtZODB(NodeTestCase):
         foo = od['foo'] = OOBTodict()
         bar = od['bar'] = OOBTodict()
         baz = od['baz'] = OOBTodict()
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('foo', OOBTodict()),
         ('bar', OOBTodict()),
         ('baz', OOBTodict())])
@@ -166,7 +166,7 @@ class TestNodeExtZODB(NodeTestCase):
 
         # Check copy
         od2 = od.copy()
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('foo', OOBTodict()), ('bar', OOBTodict())])
         """, repr(od2))
 
@@ -176,7 +176,7 @@ class TestNodeExtZODB(NodeTestCase):
 
         # Check sort
         od2.sort(key=lambda x: x[0])
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('bar', OOBTodict()), ('foo', OOBTodict())])
         """, repr(od2))
         self.assertEqual(od2.keys(), ['bar', 'foo'])
@@ -275,7 +275,7 @@ class TestNodeExtZODB(NodeTestCase):
         root = self.open()
         root[zodbnode.__name__] = zodbnode
         zodbnode['child'] = ZODBNode('child')
-        self.check_output("""\
+        self.checkOutput("""\
         {'zodbnode': <ZODBNode object 'zodbnode' at ...>}
         """, repr(root))
         self.assertEqual(zodbnode.keys(), ['child'])
@@ -343,7 +343,7 @@ class TestNodeExtZODB(NodeTestCase):
             '<class \'node.ext.zodb.OOBTNode\'>: oobtnode\n'
             '  <class \'node.ext.zodb.OOBTNode\'>: child\n'
         ))
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('child', <OOBTNode object 'child' at ...>)])
         """, repr(oobtnode.storage))
 
@@ -388,10 +388,10 @@ class TestNodeExtZODB(NodeTestCase):
         oobtnode.attribute_access_for_attrs = False
 
         # Check attrs storage
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
         """, repr(oobtnode.attrs.storage))
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
         """, repr(oobtnode.attrs._storage))
         self.assertTrue(oobtnode.attrs.storage is oobtnode.attrs._storage)
@@ -399,7 +399,7 @@ class TestNodeExtZODB(NodeTestCase):
         root = self.open()
         oobtnode = root['oobtnode']
         oobtnode.attribute_access_for_attrs = False
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('foo', 2), ('bar', <OOBTNode object 'bar' at ...>)])
         """, repr(oobtnode.attrs.storage))
 
@@ -588,7 +588,7 @@ class TestNodeExtZODB(NodeTestCase):
             sorted(dict_impl.keys(od)),
             ['____lh', '____lt', 'bam', 'bar', 'baz', 'foo']
         )
-        err = self.expect_error(
+        err = self.expectError(
             UnexpextedEndOfList,
             check_odict_consistency,
             od,
@@ -606,7 +606,7 @@ class TestNodeExtZODB(NodeTestCase):
 
         # Check whether double linked list contains inexistent key
         dict_impl.__setitem__(od, 'foo', [_nil, 'foo', 'inexistent'])
-        err = self.expect_error(
+        err = self.expectError(
             ListReferenceInconsistency,
             check_odict_consistency,
             od,
@@ -624,7 +624,7 @@ class TestNodeExtZODB(NodeTestCase):
 
         # Check broken list head
         od.lh = 'inexistent'
-        err = self.expect_error(
+        err = self.expectError(
             ListHeadInconsistency,
             check_odict_consistency,
             od,
@@ -642,7 +642,7 @@ class TestNodeExtZODB(NodeTestCase):
 
         # Check broken list tail
         od.lt = 'inexistent'
-        err = self.expect_error(
+        err = self.expectError(
             ListTailInconsistency,
             check_odict_consistency,
             od,
@@ -666,7 +666,7 @@ class TestNodeExtZODB(NodeTestCase):
         reset_odict(od, ignore_key=ignore_key)
         self.assertEqual(od.lh, '123')
         self.assertEqual(od.lt, 'foo')
-        self.check_output("""\
+        self.checkOutput("""\
         OOBTodict([('123', 'foo'),
         ('bar', 'bar'),
         ('baz', 'baz'),
@@ -676,4 +676,11 @@ class TestNodeExtZODB(NodeTestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()                                          # pragma: no cover
+    from node.ext.zodb import tests
+    import sys
+
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.findTestCases(tests))
+    runner = unittest.TextTestRunner(failfast=True)
+    result = runner.run(suite)
+    sys.exit(not result.wasSuccessful())

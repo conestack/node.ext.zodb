@@ -27,15 +27,16 @@ setup(
     description=shortdesc,
     long_description=longdesc,
     classifiers=[
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: BSD License',
         'Intended Audience :: Developers',
         'Topic :: Software Development',
-        'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6'
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10'
     ],
     keywords='node odict zodb persistent tree',
     author='Node Contributors',
@@ -49,7 +50,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'node>0.999',
+        'node>=1.0',
         'ZODB'
     ],
     test_suite='odict.tests'
