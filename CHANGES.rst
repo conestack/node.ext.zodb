@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.5 (unreleased)
+1.5 (2022-03-21)
 ----------------
 
 - Replace deprecated use of ``Storage`` by ``MappingStorage``.
