@@ -262,7 +262,7 @@ class TestNodeExtZODB(NodeTestCase):
 
     def test_ZODBNode(self):
         # Based on PersistentDict as storage
-        zodbnode = ZODBNode('zodbnode')
+        zodbnode = ZODBNode(name='zodbnode')
 
         # Interface check
         self.assertTrue(IZODBNode.providedBy(zodbnode))
@@ -274,7 +274,7 @@ class TestNodeExtZODB(NodeTestCase):
         # Structure check
         root = self.open()
         root[zodbnode.__name__] = zodbnode
-        zodbnode['child'] = ZODBNode('child')
+        zodbnode['child'] = ZODBNode(name='child')
         self.checkOutput("""\
         {'zodbnode': <ZODBNode object 'zodbnode' at ...>}
         """, repr(root))
@@ -312,7 +312,7 @@ class TestNodeExtZODB(NodeTestCase):
         # Fill root with some ZODBNodes and check memory usage
         transaction.commit()
         old_size = self.storage.getSize()
-        root['largezodb'] = ZODBNode('largezodb')
+        root['largezodb'] = ZODBNode(name='largezodb')
         for i in range(1000):
             root['largezodb'][str(i)] = ZODBNode()
         self.assertEqual(len(root['largezodb']), 1000)
@@ -323,7 +323,7 @@ class TestNodeExtZODB(NodeTestCase):
 
     def test_OOBTNode(self):
         # Based on OOBTree as storage
-        oobtnode = OOBTNode('oobtnode')
+        oobtnode = OOBTNode(name='oobtnode')
 
         # Interface check
         self.assertTrue(IZODBNode.providedBy(oobtnode))
@@ -335,7 +335,7 @@ class TestNodeExtZODB(NodeTestCase):
         # Structure check
         root = self.open()
         root[oobtnode.__name__] = oobtnode
-        oobtnode['child'] = OOBTNode('child')
+        oobtnode['child'] = OOBTNode(name='child')
         self.assertEqual(sorted(root.keys()), ['oobtnode'])
         self.assertEqual(oobtnode.keys(), ['child'])
         self.assertEqual(oobtnode.values(), [oobtnode['child']])
