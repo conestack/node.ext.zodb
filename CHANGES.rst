@@ -4,7 +4,9 @@ Changes
 1.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Pass ``name`` and ``parent`` as keyword arguments all over the place.
+  Preparation for use of ``NodeInit`` behavior instead of ``DefaultInit``.
+  [rnix]
 
 
 1.5 (2022-03-21)
