@@ -12,7 +12,7 @@ def read_file(name):
         return f.read()
 
 
-version = '1.6'
+version = '1.7.dev0'
 shortdesc = 'Node Implementation with ZODB persistence'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
