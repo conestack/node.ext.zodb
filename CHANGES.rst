@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.6 (unreleased)
+1.6 (2022-12-05)
 ----------------
 
 - Pass ``name`` and ``parent`` as keyword arguments all over the place.
