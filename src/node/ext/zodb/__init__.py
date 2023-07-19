@@ -1,9 +1,9 @@
-from node.behaviors import MappingAdopt
 from node.behaviors import AsAttrAccess
 from node.behaviors import DefaultInit
+from node.behaviors import MappingAdopt
 from node.behaviors import MappingConstraints
 from node.behaviors import MappingNode
-from node.behaviors import Order
+from node.behaviors import MappingOrder
 from node.ext.zodb.behaviors import OOBTodictStorage
 from node.ext.zodb.behaviors import PodictStorage
 from node.ext.zodb.behaviors import ZODBAttributes
@@ -29,7 +29,7 @@ class ZODBNodeAttributes(Persistent):
 @plumbing(
     MappingConstraints,
     MappingAdopt,
-    Order,
+    MappingOrder,
     AsAttrAccess,
     DefaultInit,
     MappingNode,
@@ -52,7 +52,7 @@ class OOBTNodeAttributes(Persistent):
 @plumbing(
     MappingConstraints,
     MappingAdopt,
-    Order,
+    MappingOrder,
     AsAttrAccess,
     DefaultInit,
     MappingNode,
