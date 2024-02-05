@@ -53,5 +53,9 @@ setup(
         'node>=1.0',
         'ZODB'
     ],
+    extras_require=dict(
+        test=['coverage']
+    ),
+    tests_require=['coverage'],
     test_suite='odict.tests'
 )
