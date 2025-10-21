@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "node.ext.zodb"
+version = "1.7.dev0"
+description = "Node Implementation with ZODB persistence"
+readme = "README.rst"
+license = {text = "Simplified BSD"}
+authors = [{name = "Node Contributors", email = "dev@conestack.org"}]
+keywords = ["node", "odict", "zodb", "persistent", "tree"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: BSD License",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    "node>=1.0",
+    "ZODB",
+]
+
+[project.optional-dependencies]
+test = [
+    "coverage",
+]
+
+[project.urls]
+Homepage = "http://github.com/conestack/node.ext.zodb"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.zest-releaser]
+create-wheel = true
