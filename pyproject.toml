@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "node.ext.zodb"
@@ -34,15 +34,6 @@ test = [
 
 [project.urls]
 Homepage = "http://github.com/conestack/node.ext.zodb"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools]
-zip-safe = false
-
-[tool.setuptools.package-dir]
-"" = "src"
 
 [tool.zest-releaser]
 create-wheel = true
