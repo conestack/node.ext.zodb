@@ -4,7 +4,8 @@ Changes
 1.7 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Pin upper versions of dependencies.
+  [rnix]
 
 
 1.6 (2022-12-05)

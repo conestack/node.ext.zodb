@@ -50,7 +50,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'node>=1.0',
+        'node>=1.0,<2.0.0',
         'ZODB'
     ],
     extras_require=dict(
