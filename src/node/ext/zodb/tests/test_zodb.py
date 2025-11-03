@@ -23,7 +23,6 @@ import os
 import shutil
 import tempfile
 import transaction
-import unittest
 
 
 class TestNodeExtZODB(NodeTestCase):
@@ -673,14 +672,3 @@ class TestNodeExtZODB(NodeTestCase):
         ('foo', 'foo')])
         """, repr(od))
         check_odict_consistency(od, ignore_key=ignore_key)
-
-
-if __name__ == '__main__':
-    from node.ext.zodb import tests
-    import sys
-
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.findTestCases(tests))
-    runner = unittest.TextTestRunner(failfast=True)
-    result = runner.run(suite)
-    sys.exit(not result.wasSuccessful())
