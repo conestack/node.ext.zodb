@@ -138,7 +138,7 @@ COVERAGE_COMMAND?=\
 	coverage run \
 		--source=src/node/ext/zodb \
 		-m pytest src/node/ext/zodb/tests \
-	&& $(VENV_FOLDER)/bin/coverage report --fail-under=100
+	&& coverage report --fail-under=100
 
 ##############################################################################
 # END SETTINGS - DO NOT EDIT BELOW THIS LINE
