@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "node.ext.zodb"
-version = "1.7.dev0"
+version = "2.0.0.dev0"
 description = "Node Implementation with ZODB persistence"
 readme = "README.rst"
 license = {text = "Simplified BSD"}
