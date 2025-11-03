@@ -64,6 +64,9 @@ class OOBTodict(_odict, OOBTree):
         else:
             _odict.__setitem__(self, key, val)
 
+    def __len__(self):
+        return len(self.keys())
+
     def __nonzero__(self):
         for _ in self._dict_impl().__iter__(self):
             return True
