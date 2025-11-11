@@ -4,7 +4,9 @@
 /.mxmake
 /.ruff_cache
 /build
+/constraints-mxdev.txt
 /dist/
 /htmlcov/
 /requirements-mxdev.txt
+/sources/
 /venv
