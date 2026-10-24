@@ -4,6 +4,12 @@ Changes
 2.0.1 (unreleased)
 ------------------
 
+- Base ``Podict`` and ``OOBTodict`` on ``odict.pyodict._base_odict`` with
+  ``_dict_cls`` and ``_list_cls`` instead of the deprecated ``_odict`` API,
+  and on ``persistent.mapping.PersistentMapping`` instead of the deprecated
+  ``persistent.dict.PersistentDict`` alias. Stored objects are unaffected.
+  [rnix]
+
 - Modernise the code ruff flags as outdated: ``u''`` prefixes, ``class
   X(object)`` and ``.format()`` over f-strings. Behaviour unchanged.
   ``super(Class, self)`` is kept, see ``cone.app``.

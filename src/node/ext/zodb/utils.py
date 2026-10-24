@@ -1,23 +1,23 @@
 from BTrees.OOBTree import OOBTree
+from odict.pyodict import _base_odict
 from odict.pyodict import _nil
-from odict.pyodict import _odict
-from persistent.dict import PersistentDict
 from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 
 
-class Podict(_odict, PersistentDict):
-    def _dict_impl(self):
-        return PersistentDict
+class Podict(_base_odict, PersistentMapping):
+    def _dict_cls(self):
+        return PersistentMapping
 
-    def _list_factory(self):
+    def _list_cls(self):
         return PersistentList
 
 
-class OOBTodict(_odict, OOBTree):
-    def _dict_impl(self):
+class OOBTodict(_base_odict, OOBTree):
+    def _dict_cls(self):
         return OOBTree
 
-    def _list_factory(self):
+    def _list_cls(self):
         return PersistentList
 
     @property
@@ -51,22 +51,22 @@ class OOBTodict(_odict, OOBTree):
 
     def __getitem__(self, key):
         if key.startswith('____'):
-            return self._dict_impl().__getitem__(self, key)
-        return _odict.__getitem__(self, key)
+            return self._dict_cls().__getitem__(self, key)
+        return _base_odict.__getitem__(self, key)
 
     def __setitem__(self, key, val):
         if key.startswith('____'):
             # private attributes, no way to set persistent attributes on
             # OOBTree deriving class.
-            self._dict_impl().__setitem__(self, key, val)
+            self._dict_cls().__setitem__(self, key, val)
         else:
-            _odict.__setitem__(self, key, val)
+            _base_odict.__setitem__(self, key, val)
 
     def __len__(self):
         return len(self.keys())
 
     def __bool__(self):
-        for _ in self._dict_impl().__iter__(self):
+        for _ in self._dict_cls().__iter__(self):
             return True
         return False
 
@@ -159,7 +159,7 @@ def check_odict_consistency(od, ignore_key=None):
     If ignore_key is given, it gets called for all keys from original dict
     implementation and expect True for it if specific keys should be ignored.
     """
-    dict_impl = od._dict_impl()
+    dict_impl = od._dict_cls()
     orgin_keys = dict_impl.keys(od)
     if ignore_key is not None:
         orgin_keys = [_ for _ in orgin_keys if not ignore_key(_)]
@@ -183,7 +183,7 @@ def check_odict_consistency(od, ignore_key=None):
 
 def reset_odict(od, ignore_key=None):
     """Reset odict. Order will break."""
-    dict_impl = od._dict_impl()
+    dict_impl = od._dict_cls()
     keys = dict_impl.keys(od)
     if ignore_key is not None:
         keys = [_ for _ in keys if not ignore_key(_)]

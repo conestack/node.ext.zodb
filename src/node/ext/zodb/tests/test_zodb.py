@@ -14,8 +14,8 @@ from node.ext.zodb.utils import ListTailInconsistency
 from node.ext.zodb.utils import reset_odict
 from node.ext.zodb.utils import UnexpextedEndOfList
 from node.tests import NodeTestCase
+from odict.pyodict import _base_odict
 from odict.pyodict import _nil
-from odict.pyodict import _odict
 from persistent.list import PersistentList
 from ZODB.DB import DB
 from ZODB.FileStorage import FileStorage
@@ -77,14 +77,14 @@ class TestNodeExtZODB(NodeTestCase):
     def test_OOBTodict(self):
         # Test bases
         od = OOBTodict()
-        self.assertEqual(od.__class__.__bases__, (_odict, OOBTree))
+        self.assertEqual(od.__class__.__bases__, (_base_odict, OOBTree))
 
         # Test dict impl
-        dict_ = od._dict_impl()
+        dict_ = od._dict_cls()
         self.assertTrue(dict_ is OOBTree)
 
         # Test list factory
-        list_ = od._list_factory()
+        list_ = od._list_cls()
         self.assertTrue(list_ is PersistentList)
 
         # Test list tail and head
@@ -257,7 +257,7 @@ class TestNodeExtZODB(NodeTestCase):
         self.close()
 
     def test_ZODBNode(self):
-        # Based on PersistentDict as storage
+        # Based on PersistentMapping as storage
         zodbnode = ZODBNode(name='zodbnode')
 
         # Interface check
@@ -428,7 +428,7 @@ class TestNodeExtZODB(NodeTestCase):
 
         # Check internal datastructure of attrs
         storage = oobtnode.attrs.storage
-        dict_ = storage._dict_impl()
+        dict_ = storage._dict_cls()
         self.assertTrue(dict_ is OOBTree)
         self.assertEqual(sorted(dict_.keys(storage)), ['____lh', '____lt', 'bar', 'foo'])
 
@@ -447,7 +447,7 @@ class TestNodeExtZODB(NodeTestCase):
         root = self.open()
         oobtnode = root['oobtnode']
         storage = oobtnode.attrs.storage
-        dict_ = storage._dict_impl()
+        dict_ = storage._dict_cls()
         self.assertEqual(dict_.__getitem__(storage, '____lh'), 'foo')
         self.assertEqual(dict_.__getitem__(storage, '____lt'), 'baz')
         attrs = oobtnode.attrs
@@ -608,7 +608,7 @@ class TestNodeExtZODB(NodeTestCase):
         check_odict_consistency(od, ignore_key=ignore_key)
 
         # Check if ``_nil`` marker set irregulary
-        dict_impl = od._dict_impl()
+        dict_impl = od._dict_cls()
         dict_impl.__setitem__(od, 'bam', ['foo', 'bam', _nil])
         self.assertEqual(od.keys(), ['foo', 'bar', 'baz'])
         self.assertEqual(
