@@ -67,12 +67,10 @@ class OOBTodict(_odict, OOBTree):
     def __len__(self):
         return len(self.keys())
 
-    def __nonzero__(self):
+    def __bool__(self):
         for _ in self._dict_impl().__iter__(self):
             return True
         return False
-
-    __bool__ = __nonzero__
 
 
 def volatile_property(func):
