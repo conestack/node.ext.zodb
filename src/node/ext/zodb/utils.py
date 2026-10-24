@@ -6,7 +6,6 @@ from persistent.list import PersistentList
 
 
 class Podict(_odict, PersistentDict):
-
     def _dict_impl(self):
         return PersistentDict
 
@@ -15,7 +14,6 @@ class Podict(_odict, PersistentDict):
 
 
 class OOBTodict(_odict, OOBTree):
-
     def _dict_impl(self):
         return OOBTree
 
@@ -77,8 +75,9 @@ def volatile_property(func):
     """Like ``node.utils.instance_property``, but sets instance attribute
     with '_v_' prefix.
     """
+
     def wrapper(self):
-        attribute_name = '_v_{}'.format(func.__name__)
+        attribute_name = f'_v_{func.__name__}'
         # do not use hasattr/getattr to avoid problems when overwriting
         # __getattr__ on a class which also uses volatile_property
         try:
@@ -86,6 +85,7 @@ def volatile_property(func):
         except AttributeError:
             setattr(self, attribute_name, func(self))
             return object.__getattribute__(self, attribute_name)
+
     wrapper.__doc__ = func.__doc__
     return property(wrapper)
 
@@ -93,6 +93,7 @@ def volatile_property(func):
 ##############################################################################
 # maintenance utilities
 ##############################################################################
+
 
 class ConsistencyError(Exception):
     """Base exception for odict data structure inconsistencies."""
@@ -105,8 +106,7 @@ class ListHeadInconsistency(ConsistencyError):
         self.missing = str(error)
         self.orgin_keys = orgin_keys
         message = (
-            u'List head contains a reference to a non existing dict '
-            u'entry: {} not in {}'
+            'List head contains a reference to a non existing dict entry: {} not in {}'
         )
         message = message.format(str(error), str(orgin_keys))
         super(ListHeadInconsistency, self).__init__(message)
@@ -119,23 +119,21 @@ class ListTailInconsistency(ConsistencyError):
         self.missing = str(error)
         self.orgin_keys = orgin_keys
         message = (
-            u'List tail contains a reference to a non existing dict '
-            u'entry: {} not in {}'
+            'List tail contains a reference to a non existing dict entry: {} not in {}'
         )
         message = message.format(str(error), str(orgin_keys))
         super(ListTailInconsistency, self).__init__(message)
 
 
 class ListReferenceInconsistency(ConsistencyError):
-    """Thrown if double linked list pointer references non existing dict entry.
-    """
+    """Thrown if double linked list pointer references non existing dict entry."""
 
     def __init__(self, error, orgin_keys):
         self.missing = str(error)
         self.orgin_keys = orgin_keys
         message = (
-            u'Double linked list contains a reference to a non '
-            u'existing dict entry: {} not in {}'
+            'Double linked list contains a reference to a non '
+            'existing dict entry: {} not in {}'
         )
         message = message.format(str(error), str(orgin_keys))
         super(ListReferenceInconsistency, self).__init__(message)
@@ -148,8 +146,8 @@ class UnexpextedEndOfList(ConsistencyError):
         self.od_keys = od_keys
         self.orgin_keys = orgin_keys
         message = (
-            u'Unexpected ``_nil`` pointer found in double linked '
-            u'list. Resulting key count does not match:  {} != {}'
+            'Unexpected ``_nil`` pointer found in double linked '
+            'list. Resulting key count does not match:  {} != {}'
         )
         message = message.format(len(orgin_keys), len(od_keys))
         super(UnexpextedEndOfList, self).__init__(message)

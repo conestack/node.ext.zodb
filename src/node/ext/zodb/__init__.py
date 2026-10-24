@@ -16,12 +16,7 @@ from persistent import Persistent
 from plumber import plumbing
 
 
-@plumbing(
-    MappingConstraints,
-    MappingAdopt,
-    DefaultInit,
-    MappingNode,
-    PodictStorage)
+@plumbing(MappingConstraints, MappingAdopt, DefaultInit, MappingNode, PodictStorage)
 class ZODBNodeAttributes(Persistent):
     child_constraints = None
 
@@ -34,17 +29,13 @@ class ZODBNodeAttributes(Persistent):
     DefaultInit,
     MappingNode,
     ZODBAttributes,
-    PodictStorage)
+    PodictStorage,
+)
 class ZODBNode(Persistent):
     attributes_factory = ZODBNodeAttributes
 
 
-@plumbing(
-    MappingConstraints,
-    MappingAdopt,
-    DefaultInit,
-    MappingNode,
-    OOBTodictStorage)
+@plumbing(MappingConstraints, MappingAdopt, DefaultInit, MappingNode, OOBTodictStorage)
 class OOBTNodeAttributes(Persistent):
     child_constraints = None
 
@@ -57,6 +48,7 @@ class OOBTNodeAttributes(Persistent):
     DefaultInit,
     MappingNode,
     ZODBAttributes,
-    OOBTodictStorage)
+    OOBTodictStorage,
+)
 class OOBTNode(Persistent):
     attributes_factory = OOBTNodeAttributes

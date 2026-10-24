@@ -18,8 +18,7 @@ import copy
 
 @implementer(IZODBNode)
 class ZODBBehavior(Behavior):
-    """This behavior requires plumbed class to inherit from ``Persistent``.
-    """
+    """This behavior requires plumbed class to inherit from ``Persistent``."""
 
     @override
     @property
@@ -62,7 +61,6 @@ class ZODBBehavior(Behavior):
 
 @implementer(IOrdered)
 class PodictStorage(ZODBBehavior, MappingStorage):
-
     @plumb
     def __init__(next_, self, *a, **kw):
         next_(self, *a, **kw)
@@ -78,7 +76,6 @@ class PodictStorage(ZODBBehavior, MappingStorage):
 
 @implementer(IOrdered)
 class OOBTodictStorage(ZODBBehavior, MappingStorage):
-
     @plumb
     def __init__(next_, self, *a, **kw):
         next_(self, *a, **kw)
@@ -108,10 +105,7 @@ class ZODBAttributes(Behavior):
         try:
             attrs = self._attrs
         except AttributeError:
-            self._attrs = attrs = self.attributes_factory(
-                name='_attrs',
-                parent=self
-            )
+            self._attrs = attrs = self.attributes_factory(name='_attrs', parent=self)
         if self.attribute_access_for_attrs:
             return AttributeAccess(attrs)
         return attrs
